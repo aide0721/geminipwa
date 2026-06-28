@@ -21754,60 +21754,129 @@ if (state.settings.disableDeleteApiKeyConfirmation) {
 
         window.errorRecovery = errorRecovery;
 
-        class SimpleOpenAITts {
-            constructor() {
-                this.audioElement = document.createElement('audio');
-                this.config = {
-                    endpoint: 'http://127.0.0.1:8000/v1/audio/speech',
-                    model: 'tts-1',
-                    voice: 'alloy',
-                    speed: 1,
-                    apiKey: ''
-                };
-            }
+class SimpleOpenAITts {
+    constructor() {
+        this.config = {};
+        this.queue = [];          // 再生待ちのタスク（Promise）を入れる配列
+        this.isPlaying = false;     // 現在どれかを再生中かどうかのフラグ
+        this.audioElement = null;   // 現在再生中のAudioオブジェクト
+        this.isStopped = false;     // 【追加】ストップがかけられたかどうかのフラグ
+    }
 
-            updateConfig(newConfig) {
-                this.config = { ...this.config, ...newConfig };
-            }
+    updateConfig(newConfig) {
+        this.config = { ...this.config, ...newConfig };
+    }
 
-            async speak(text) {
-                try {
-                    console.info(`TTS生成開始: 話者=${this.config.voice}, モデル=${this.config.model}`);
-                    const headers = { 'Content-Type': 'application/json' };
-                    if (this.config.apiKey) {
-                        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-                    }
-
-                    const response = await fetch(this.config.endpoint, {
-                        method: 'POST',
-                        headers: headers,
-                        body: JSON.stringify({
-                            model: this.config.model,
-                            input: text,
-                            voice: this.config.voice,
-                            response_format: 'mp3',
-                            speed: Number(this.config.speed),
-                        }),
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTPエラー! ステータス: ${response.status}`);
-                    }
-
-                    const audioBlob = await response.blob();
-                    const audioUrl = URL.createObjectURL(audioBlob);
-                    
-                    this.audioElement.pause();
-                    this.audioElement.src = audioUrl;
-                    this.audioElement.play();
-                    
-                    this.audioElement.onended = () => URL.revokeObjectURL(audioUrl);
-                } catch (error) {
-                    console.error('TTSの生成・再生に失敗しました:', error);
-                    alert('音声の生成に失敗しました。設定やサーバーの起動を確認してください。');
-                }
-            }
+    // チャットのクリア時などに音声を強制停止したい場合用
+    stop() {
+        this.isStopped = true; // ストップフラグを立てる
+        if (this.audioElement) {
+            this.audioElement.pause();
+            this.audioElement = null;
         }
+        this.queue = [];
+        this.isPlaying = false;
+    }
+
+    // 外部から呼ばれるメインのメソッド
+    speak(text) {
+        if (!text) return;
+
+        // 新しく再生を始めるのでストップフラグを戻す
+        this.isStopped = false;
+
+        // ★ポイント1: speakが呼ばれた瞬間に、裏で即座にAPIリクエスト（生成）を開始する！
+        const fetchPromise = this._generateAudio(text);
+
+        // 生成タスク（Promiseそのもの）をキューに追加
+        this.queue.push(fetchPromise);
+
+        // キューの再生処理を開始
+        this._processQueue();
+    }
+
+    // バックグラウンドでAPIを叩いて音声を生成する内部メソッド（並行して走る）
+    async _generateAudio(text) {
+        const { endpoint, apiKey, model, voice, speed } = this.config;
+        if (!endpoint) throw new Error('TTSエンドポイントが未設定です');
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {})
+            },
+            body: JSON.stringify({
+                model: model || 'tts-1',
+                input: text,
+                voice: voice || 'alloy',
+                speed: parseFloat(speed) || 1.0
+            })
+        });
+
+        if (!response.ok) throw new Error('TTS APIエラー');
+
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+
+        // 後でメモリ解放(revoke)できるようにObjectUrlをプロパティに保持しておく
+        audio._objectUrl = audioUrl; 
+        return audio;
+    }
+
+    // キューを順番に1つずつ再生していく内部メソッド
+    async _processQueue() {
+        // すでに再生中、または次に再生するものがキューになければ何もしない
+        if (this.isPlaying || this.queue.length === 0) return;
+
+        this.isPlaying = true;
+
+        // キューの先頭から「生成中のPromise」を取り出す
+        const nextAudioPromise = this.queue.shift();
+
+        try {
+            // ★ポイント2: ここで生成完了を待つ！
+            const audio = await nextAudioPromise;
+
+            // 【修正】待っている間に stop() が呼ばれていた場合は、再生せずにメモリを解放して終了する
+            if (this.isStopped) {
+                if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
+                this.isPlaying = false;
+                return;
+            }
+
+            this.audioElement = audio;
+            audio.play();
+
+            // 再生が終わったら次のキューへ
+            audio.onended = () => {
+                if (audio._objectUrl) {
+                    URL.revokeObjectURL(audio._objectUrl); // メモリ解放
+                }
+                this.audioElement = null;
+                this.isPlaying = false;
+                
+                // 再帰的に次の音声の再生を試みる
+                this._processQueue();
+            };
+
+            // エラーハンドリング
+            audio.onerror = () => {
+                if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
+                this.audioElement = null;
+                this.isPlaying = false;
+                this._processQueue();
+            };
+
+        } catch (error) {
+            console.error('TTSキュー処理中にエラーが発生しました:', error);
+            this.isPlaying = false;
+            // エラーが発生しても、次のテキストの再生処理を止めないように次に進む
+            this._processQueue();
+        }
+    }
+}
 
         window.aiTts = new SimpleOpenAITts();
 

@@ -21704,8 +21704,64 @@ if (state.settings.disableDeleteApiKeyConfirmation) {
 
         window.errorRecovery = errorRecovery;
 
+        class SimpleOpenAITts {
+            constructor() {
+                this.audioElement = document.createElement('audio');
+                this.config = {
+                    endpoint: 'http://127.0.0.1:8000/v1/audio/speech',
+                    model: 'tts-1',
+                    voice: 'alloy',
+                    speed: 1,
+                    apiKey: ''
+                };
+            }
+
+            updateConfig(newConfig) {
+                this.config = { ...this.config, ...newConfig };
+            }
+
+            async speak(text) {
+                try {
+                    console.info(`TTS生成開始: 話者=${this.config.voice}, モデル=${this.config.model}`);
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (this.config.apiKey) {
+                        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+                    }
+
+                    const response = await fetch(this.config.endpoint, {
+                        method: 'POST',
+                        headers: headers,
+                        body: JSON.stringify({
+                            model: this.config.model,
+                            input: text,
+                            voice: this.config.voice,
+                            response_format: 'mp3',
+                            speed: Number(this.config.speed),
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTPエラー! ステータス: ${response.status}`);
+                    }
+
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    
+                    this.audioElement.pause();
+                    this.audioElement.src = audioUrl;
+                    this.audioElement.play();
+                    
+                    this.audioElement.onended = () => URL.revokeObjectURL(audioUrl);
+                } catch (error) {
+                    console.error('TTSの生成・再生に失敗しました:', error);
+                    alert('音声の生成に失敗しました。設定やサーバーの起動を確認してください。');
+                }
+            }
+        }
+
+        window.aiTts = new SimpleOpenAITts();
+
         appLogic.initializeApp();
     </script>
 </body>
-
 </html>

@@ -6734,45 +6734,61 @@ font-size: 1.142em !important;
                     </div>
                 </details>
 
-<div class="settings-group" id="settings-group-other">
-            <details open id="settings-group-other-details">
-                <summary style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
-                    その他設定・高度な機能
-                </summary>
+<div class="settings-group" id="settings-group-tts">
+    <details open id="settings-group-tts-details">
+        <summary style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
+            📢 音声読み上げ設定 (OpenAI互換)
+        </summary>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
+            <div>
+                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">エンドポイントURL:</label>
+                <input type="text" id="tts_endpoint" value="http://127.0.0.1:8000/v1/audio/speech" 
+                       style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+            </div>
 
-                <label class="checkbox-label">
-                    <input type="checkbox" id="show-top-collapse-button-toggle"> メッセージ右上に折りたたみボタンを表示する
-                </label>
-                <label class="checkbox-label">
-                    <input type="checkbox" id="show-bottom-collapse-button-toggle"> メッセージツールバーに折りたたみボタンを表示する
-                </label>
+            <div>
+                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">APIキー (必要な場合):</label>
+                <input type="password" id="tts_key" value="" 
+                       style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+            </div>
 
-                <div id="tts-settings" style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px;">
-                    <h3>📢 音声読み上げ設定 (OpenAI互換)</h3>
-                    
-                    <label>エンドポイントURL:</label><br>
-                    <input type="text" id="tts_endpoint" value="http://127.0.0.1:8000/v1/audio/speech" style="width: 100%;"><br><br>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">モデル名:</label>
+                    <input type="text" id="tts_model" value="tts-1" 
+                           style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                </div>
 
-                    <label>APIキー (必要な場合):</label><br>
-                    <input type="password" id="tts_key" value="" style="width: 100%;"><br><br>
-
-                    <label>モデル名:</label><br>
-                    <input type="text" id="tts_model" value="tts-1"><br><br>
-
-                    <label>ボイス (話者):</label><br>
-                    <select id="tts_voice">
+                <div style="flex: 1; min-width: 150px;">
+                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">ボイス (話者):</label>
+                    <select id="tts_voice" 
+                            style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                         <option value="alloy">alloy</option>
                         <option value="echo">echo</option>
                         <option value="fable">fable</option>
                         <option value="onyx">onyx</option>
                         <option value="nova">nova</option>
                         <option value="shimmer">shimmer</option>
-                    </select><br><br>
-
-                    <label>速度: <span id="tts_speed_val">1</span>倍速</label><br>
-                    <input type="range" id="tts_speed" min="0.25" max="4" step="0.05" value="1">
+                    </select>
                 </div>
-                </details>
+            </div>
+
+            <div>
+                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">速度: <span id="tts_speed_val" style="font-weight: normal;">1</span>倍速</label>
+                <div style="display: flex; align-items: center; margin-top: 5px;">
+                    <input type="range" id="tts_speed" min="0.25" max="4" step="0.05" value="1" style="flex: 1; cursor: pointer;">
+                </div>
+            </div>
+        </div>
+    </details>
+</div>
+                
+                <div class="settings-group" id="settings-group-other">
+                    <details open id="settings-group-other-details">
+                        <summary
+                            style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
+                            その他設定</summary>
                         <div style="margin-top:10px;">
                             <p style="height:10px"></p>
                             <label for="theme-select">表示テーマ:</label>

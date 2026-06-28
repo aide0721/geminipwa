@@ -21795,6 +21795,25 @@ if (state.settings.disableDeleteApiKeyConfirmation) {
 
         window.aiTts = new SimpleOpenAITts();
 
+        function syncTtsSettings() {
+            window.aiTts.updateConfig({
+                endpoint: document.getElementById('tts_endpoint').value,
+                apiKey: document.getElementById('tts_key').value,
+                model: document.getElementById('tts_model').value,
+                voice: document.getElementById('tts_voice').value,
+                speed: document.getElementById('tts_speed').value
+            });
+            document.getElementById('tts_speed_val').innerText = document.getElementById('tts_speed').value;
+        }
+
+        document.getElementById('tts_endpoint').addEventListener('input', syncTtsSettings);
+        document.getElementById('tts_key').addEventListener('input', syncTtsSettings);
+        document.getElementById('tts_model').addEventListener('input', syncTtsSettings);
+        document.getElementById('tts_voice').addEventListener('change', syncTtsSettings);
+        document.getElementById('tts_speed').addEventListener('input', syncTtsSettings);
+
+        syncTtsSettings();
+
         appLogic.initializeApp();
     </script>
 </body>

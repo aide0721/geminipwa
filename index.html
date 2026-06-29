@@ -2051,6 +2051,22 @@
             background-color: var(--bg-button-copy-hover);
         }
 
+        .message-actions .js-tts-btn {
+            background-color: var(--bg-button-retry);
+        }
+
+        .message-actions .js-tts-btn:hover {
+            background-color: var(--bg-button-retry-hover);
+        }
+
+        .message-actions .js-tts-btn.tts-speaking {
+            background-color: var(--bg-button-delete);
+        }
+
+        body:not(.tts-enabled) .js-tts-btn {
+            display: none !important;
+        }
+
         .message-cascade-controls {
             position: absolute;
             top: -35px;
@@ -7022,6 +7038,16 @@
                         </summary>
 
                         <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
+                            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="tts_enabled">
+                                    音声読み上げを利用する（各応答に読み上げボタンを表示）
+                                </label>
+                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="tts_auto_speak">
+                                    応答完了時に自動で読み上げる
+                                </label>
+                            </div>
                             <div>
                                 <label
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold;">エンドポイントURL:</label>
@@ -10375,6 +10401,14 @@
                     copyButton.classList.add('js-copy-btn');
                     actionsDiv.appendChild(copyButton);
 
+                    if (role === 'model') {
+                        const ttsButton = document.createElement('button');
+                        ttsButton.textContent = '読み上げ';
+                        ttsButton.title = 'このメッセージを読み上げる';
+                        ttsButton.classList.add('js-tts-btn');
+                        actionsDiv.appendChild(ttsButton);
+                    }
+
                     if (role === 'user' || role === 'model') {
                         const retryButton = document.createElement('button');
                         retryButton.textContent = 'リトライ';
@@ -12497,6 +12531,7 @@
                         elements.aiToAiChatBtn.disabled = !showAiToAiBtn;
                     }
                     this.adjustTextareaHeight();
+                    maybeAutoSpeakLatestResponse();
                 }
                 this.updateLoadingIndicator();
             },
@@ -14299,6 +14334,9 @@
                         }
                         if (button.classList.contains('js-copy-btn')) {
                             appLogic.copyMessageText(index, button); return;
+                        }
+                        if (button.classList.contains('js-tts-btn')) {
+                            appLogic.speakMessageText(index, button); return;
                         }
                         if (button.classList.contains('js-retry-btn')) {
                             const role = clickedMessage.classList.contains('model') ? 'model' : 'user';
@@ -18164,6 +18202,25 @@
                 elements.clipboardStackEditor.value += separator + textToCopy;
                 state.clipboardStackContent = elements.clipboardStackEditor.value;
                 elements.clipboardStackEditor.scrollTop = elements.clipboardStackEditor.scrollHeight;
+            },
+            speakMessageText(index, buttonElement) {
+                const message = state.currentMessages[index];
+                if (!message || !message.content) return;
+
+                const textToSpeak = cleanTextForTts(message.content);
+                if (!textToSpeak) return;
+
+                window.aiTts.speak(textToSpeak);
+
+                if (buttonElement) {
+                    const originalText = buttonElement.textContent;
+                    buttonElement.textContent = '読み上げ中';
+                    buttonElement.classList.add('tts-speaking');
+                    setTimeout(() => {
+                        buttonElement.textContent = originalText;
+                        buttonElement.classList.remove('tts-speaking');
+                    }, 1200);
+                }
             },
             async deleteMessage(index) {
                 await this.commitAllOpenEdits();
@@ -22109,37 +22166,6 @@
                 this._processQueue();
             }
 
-            async _processQueue() {
-                if (this.isPlaying || this.queue.length === 0) return;
-
-                this.isPlaying = true;
-
-                try {
-                    const audioPromise = this.queue.shift();
-                    const audio = await audioPromise;
-
-                    if (this.isStopped) {
-                        this.isPlaying = false;
-                        return;
-                    }
-
-                    this.audioElement = audio;
-
-                    audio.onended = () => {
-                        URL.revokeObjectURL(audio._objectUrl);
-                        this.audioElement = null;
-                        this.isPlaying = false;
-                        this._processQueue();
-                    };
-
-                    await audio.play();
-                } catch (error) {
-                    console.error("TTS再生エラー:", error);
-                    this.isPlaying = false;
-                    this._processQueue();
-                }
-            }
-
             async _generateAudio(text) {
                 const { endpoint, apiKey, model, voice, speed } = this.config;
                 if (!endpoint) throw new Error('TTSエンドポイントが未設定です');
@@ -22214,23 +22240,6 @@
 
         window.aiTts = new SimpleOpenAITts();
 
-        function syncTtsSettings() {
-            window.aiTts.updateConfig({
-                endpoint: document.getElementById('tts_endpoint').value,
-                apiKey: document.getElementById('tts_key').value,
-                model: document.getElementById('tts_model').value,
-                voice: document.getElementById('tts_voice').value,
-                speed: document.getElementById('tts_speed').value
-            });
-            document.getElementById('tts_speed_val').innerText = document.getElementById('tts_speed').value;
-        }
-
-        document.getElementById('tts_endpoint').addEventListener('input', syncTtsSettings);
-        document.getElementById('tts_key').addEventListener('input', syncTtsSettings);
-        document.getElementById('tts_model').addEventListener('input', syncTtsSettings);
-        document.getElementById('tts_voice').addEventListener('change', syncTtsSettings);
-        document.getElementById('tts_speed').addEventListener('input', syncTtsSettings);
-
         syncTtsSettings();
 
         function updateAvailableVoices() {
@@ -22280,6 +22289,66 @@
                 document.getElementById('tts_available_voices').value = savedVoices;
             }
             updateAvailableVoices();
+        });
+
+        function cleanTextForTts(text) {
+            if (!text) return '';
+            let cleaned = text;
+            // コードブロックを除去（読み上げ向けではないため）
+            cleaned = cleaned.replace(/```[\s\S]*?```/g, ' ');
+            // 「*」一つで囲まれた斜体テキストは読み上げから除外する（**太字**は除外しない）
+            cleaned = cleaned.replace(/(?<!\*)\*(?!\*)([^*]+?)\*(?!\*)/g, '');
+            // 太字記号などのMarkdown装飾記号は読み上げ用に取り除く（テキストは残す）
+            cleaned = cleaned.replace(/\*\*([^*]+?)\*\*/g, '$1');
+            cleaned = cleaned.replace(/[ \t]{2,}/g, ' ');
+            cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+            return cleaned.trim();
+        }
+
+        const ttsAutoSpokenIndices = new Set();
+
+        function maybeAutoSpeakLatestResponse() {
+            const enabledCheckbox = document.getElementById('tts_enabled');
+            const autoCheckbox = document.getElementById('tts_auto_speak');
+            if (!enabledCheckbox || !autoCheckbox) return;
+            if (!enabledCheckbox.checked || !autoCheckbox.checked) return;
+
+            const idx = state.currentMessages.length - 1;
+            if (idx < 0) return;
+            const msg = state.currentMessages[idx];
+            if (!msg || msg.role !== 'model') return;
+            if (ttsAutoSpokenIndices.has(idx)) return;
+
+            const textToSpeak = cleanTextForTts(msg.content);
+            if (!textToSpeak) return;
+
+            ttsAutoSpokenIndices.add(idx);
+            window.aiTts.speak(textToSpeak);
+        }
+
+        function applyTtsEnabledState() {
+            const enabledCheckbox = document.getElementById('tts_enabled');
+            document.body.classList.toggle('tts-enabled', !!(enabledCheckbox && enabledCheckbox.checked));
+        }
+
+        document.getElementById('tts_enabled').addEventListener('change', () => {
+            localStorage.setItem('tts_enabled', document.getElementById('tts_enabled').checked ? '1' : '0');
+            applyTtsEnabledState();
+        });
+        document.getElementById('tts_auto_speak').addEventListener('change', () => {
+            localStorage.setItem('tts_auto_speak', document.getElementById('tts_auto_speak').checked ? '1' : '0');
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedEnabled = localStorage.getItem('tts_enabled');
+            if (savedEnabled !== null) {
+                document.getElementById('tts_enabled').checked = savedEnabled === '1';
+            }
+            const savedAuto = localStorage.getItem('tts_auto_speak');
+            if (savedAuto !== null) {
+                document.getElementById('tts_auto_speak').checked = savedAuto === '1';
+            }
+            applyTtsEnabledState();
         });
 
         document.getElementById('tts_endpoint').addEventListener('input', syncTtsSettings);

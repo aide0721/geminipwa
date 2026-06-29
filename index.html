@@ -6801,8 +6801,6 @@
                                 placeholder="例: https://dashing-fenglisu-4c8446.netlify.app"
                                 aria-label="画像URL変換用のベースURL">
 
-
-                            <!-- ▼▼▼ ここから追加 ▼▼▼ -->
                             <hr style="margin: 15px 0;">
                             <div style="margin-top:15px;">
                                 <label class="checkbox-label">
@@ -7020,14 +7018,14 @@
                     <details open id="settings-group-tts-details">
                         <summary
                             style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
-                            音声読み上げ設定 (OpenAI互換)
+                            音声読み上げ設定 (OpenAI TTS互換)
                         </summary>
 
                         <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
                             <div>
                                 <label
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold;">エンドポイントURL:</label>
-                                <input type="text" id="tts_endpoint" value="http://127.0.0.1:8000/v1/audio/speech"
+                                <input type="text" id="tts_endpoint" value="/v1/audio/speech"
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                             </div>
 
@@ -7046,17 +7044,20 @@
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
+                                <div style="flex: 1; min-width: 200px;">
+                                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
+                                        for="tts_available_voices">利用可能なボイス (カンマ区切り):</label>
+                                    <input type="text" id="tts_available_voices"
+                                        value="alloy,echo,fable,onyx,nova,shimmer"
+                                        style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                </div>
+
                                 <div style="flex: 1; min-width: 150px;">
                                     <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">ボイス
                                         (話者):</label>
                                     <select id="tts_voice"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                         <option value="alloy">alloy</option>
-                                        <option value="echo">echo</option>
-                                        <option value="fable">fable</option>
-                                        <option value="onyx">onyx</option>
-                                        <option value="nova">nova</option>
-                                        <option value="shimmer">shimmer</option>
                                     </select>
                                 </div>
                             </div>
@@ -22200,6 +22201,72 @@
         document.getElementById('tts_speed').addEventListener('input', syncTtsSettings);
 
         syncTtsSettings();
+
+// --- 追記: ボイスのプルダウンを動的に更新する処理 ---
+function updateAvailableVoices() {
+    const availableVoicesInput = document.getElementById('tts_available_voices');
+    const voiceSelect = document.getElementById('tts_voice');
+    
+    // カンマ区切りの文字列を配列にし、前後の空白を除去、空文字を省く
+    const voices = availableVoicesInput.value.split(',').map(v => v.trim()).filter(v => v !== '');
+    
+    // 現在選択されているボイス名を保持しておく
+    const currentSelected = voiceSelect.value;
+    
+    // プルダウンの選択肢を一旦リセット
+    voiceSelect.innerHTML = '';
+    
+    // 入力されたボイスリストから新しい <option> を生成
+    voices.forEach(voice => {
+        const option = document.createElement('option');
+        option.value = voice;
+        option.textContent = voice;
+        voiceSelect.appendChild(option);
+    });
+    
+    // 以前選択していたボイスが新しいリストに残っていれば再選択、なければ先頭のボイスを選択
+    if (voices.includes(currentSelected)) {
+        voiceSelect.value = currentSelected;
+    } else if (voices.length > 0) {
+        voiceSelect.value = voices[0];
+    }
+    
+    // 次回起動時のためにローカルストレージにリストを保存
+    localStorage.setItem('tts_available_voices', availableVoicesInput.value);
+    
+    // TTS本体の設定を同期（既存の関数を呼び出し）
+    syncTtsSettings();
+}
+
+// --- 既存の処理の場所 ---
+function syncTtsSettings() {
+    window.aiTts.updateConfig({
+        endpoint: document.getElementById('tts_endpoint').value,
+        apiKey: document.getElementById('tts_key').value,
+        model: document.getElementById('tts_model').value,
+        voice: document.getElementById('tts_voice').value,
+        speed: document.getElementById('tts_speed').value
+    });
+    document.getElementById('tts_speed_val').innerText = document.getElementById('tts_speed').value;
+}
+
+// --- 追記: イベントリスナーと初期化処理 ---
+document.getElementById('tts_available_voices').addEventListener('input', updateAvailableVoices);
+
+// 初期ロード時の復元処理
+window.addEventListener('DOMContentLoaded', () => {
+    // ローカルストレージに保存されたボイスリストがあれば復元
+    const savedVoices = localStorage.getItem('tts_available_voices');
+    if (savedVoices) {
+        document.getElementById('tts_available_voices').value = savedVoices;
+    }
+    // 起動時に1回プルダウンを生成する
+    updateAvailableVoices();
+});
+
+// (以下は既存のイベントリスナー群)
+document.getElementById('tts_endpoint').addEventListener('input', syncTtsSettings);
+// ...
 
         appLogic.initializeApp();
     </script>

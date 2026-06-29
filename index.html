@@ -22202,21 +22202,16 @@
 
         syncTtsSettings();
 
-// --- 追記: ボイスのプルダウンを動的に更新する処理 ---
 function updateAvailableVoices() {
     const availableVoicesInput = document.getElementById('tts_available_voices');
     const voiceSelect = document.getElementById('tts_voice');
     
-    // カンマ区切りの文字列を配列にし、前後の空白を除去、空文字を省く
     const voices = availableVoicesInput.value.split(',').map(v => v.trim()).filter(v => v !== '');
     
-    // 現在選択されているボイス名を保持しておく
     const currentSelected = voiceSelect.value;
     
-    // プルダウンの選択肢を一旦リセット
     voiceSelect.innerHTML = '';
     
-    // 入力されたボイスリストから新しい <option> を生成
     voices.forEach(voice => {
         const option = document.createElement('option');
         option.value = voice;
@@ -22224,21 +22219,17 @@ function updateAvailableVoices() {
         voiceSelect.appendChild(option);
     });
     
-    // 以前選択していたボイスが新しいリストに残っていれば再選択、なければ先頭のボイスを選択
     if (voices.includes(currentSelected)) {
         voiceSelect.value = currentSelected;
     } else if (voices.length > 0) {
         voiceSelect.value = voices[0];
     }
     
-    // 次回起動時のためにローカルストレージにリストを保存
     localStorage.setItem('tts_available_voices', availableVoicesInput.value);
     
-    // TTS本体の設定を同期（既存の関数を呼び出し）
     syncTtsSettings();
 }
 
-// --- 既存の処理の場所 ---
 function syncTtsSettings() {
     window.aiTts.updateConfig({
         endpoint: document.getElementById('tts_endpoint').value,
@@ -22250,21 +22241,16 @@ function syncTtsSettings() {
     document.getElementById('tts_speed_val').innerText = document.getElementById('tts_speed').value;
 }
 
-// --- 追記: イベントリスナーと初期化処理 ---
 document.getElementById('tts_available_voices').addEventListener('input', updateAvailableVoices);
 
-// 初期ロード時の復元処理
 window.addEventListener('DOMContentLoaded', () => {
-    // ローカルストレージに保存されたボイスリストがあれば復元
     const savedVoices = localStorage.getItem('tts_available_voices');
     if (savedVoices) {
         document.getElementById('tts_available_voices').value = savedVoices;
     }
-    // 起動時に1回プルダウンを生成する
     updateAvailableVoices();
 });
 
-// (以下は既存のイベントリスナー群)
 document.getElementById('tts_endpoint').addEventListener('input', syncTtsSettings);
 // ...
 

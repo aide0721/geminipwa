@@ -7039,11 +7039,13 @@
 
                         <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
                             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <label
+                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                                     <input type="checkbox" id="tts_enabled">
                                     音声読み上げを利用する（各応答に読み上げボタンを表示）
                                 </label>
-                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <label
+                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                                     <input type="checkbox" id="tts_auto_speak">
                                     応答完了時に自動で読み上げる
                                 </label>
@@ -22138,6 +22140,7 @@
                 this.isPlaying = false;
                 this.audioElement = null;
                 this.isStopped = false;
+                this.audioContext = null;
             }
 
             updateConfig(newConfig) {
@@ -22147,7 +22150,7 @@
             stop() {
                 this.isStopped = true;
                 if (this.audioElement) {
-                    this.audioElement.pause();
+                    this.audioElement.stop();
                     this.audioElement = null;
                 }
                 this.queue = [];
@@ -22156,13 +22159,16 @@
 
             speak(text) {
                 if (!text) return;
-
                 this.isStopped = false;
 
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } else if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+
                 const fetchPromise = this._generateAudio(text);
-
                 this.queue.push(fetchPromise);
-
                 this._processQueue();
             }
 
@@ -22186,49 +22192,43 @@
 
                 if (!response.ok) throw new Error('TTS APIエラー');
 
-                const blob = await response.blob();
-                const audioUrl = URL.createObjectURL(blob);
-                const audio = new Audio(audioUrl);
-
-                audio._objectUrl = audioUrl;
-                return audio;
+                const arrayBuffer = await response.arrayBuffer();
+                return arrayBuffer;
             }
 
             async _processQueue() {
                 if (this.isPlaying || this.queue.length === 0) return;
 
                 this.isPlaying = true;
-
                 const nextAudioPromise = this.queue.shift();
 
                 try {
-                    const audio = await nextAudioPromise;
+                    const arrayBuffer = await nextAudioPromise;
 
                     if (this.isStopped) {
-                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
                         this.isPlaying = false;
                         return;
                     }
 
-                    this.audioElement = audio;
-                    audio.play();
+                    if (!this.audioContext) {
+                        this.isPlaying = false;
+                        return;
+                    }
 
-                    audio.onended = () => {
-                        if (audio._objectUrl) {
-                            URL.revokeObjectURL(audio._objectUrl);
-                        }
+                    const decoded = await this.audioContext.decodeAudioData(arrayBuffer);
+                    const source = this.audioContext.createBufferSource();
+                    source.buffer = decoded;
+                    source.connect(this.audioContext.destination);
+
+                    this.audioElement = source;
+
+                    source.onended = () => {
                         this.audioElement = null;
                         this.isPlaying = false;
-
                         this._processQueue();
                     };
 
-                    audio.onerror = () => {
-                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
-                        this.audioElement = null;
-                        this.isPlaying = false;
-                        this._processQueue();
-                    };
+                    source.start(0);
 
                 } catch (error) {
                     console.error('TTSキュー処理中にエラーが発生しました:', error);

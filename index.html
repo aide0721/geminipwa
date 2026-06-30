@@ -7033,9 +7033,7 @@
                     <details open id="settings-group-tts-details">
                         <summary
                             style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
-                            音声読み上げ設定 (OpenAI TTS互換)
-                        </summary>
-
+                            音声読み上げ設定 (OpenAI TTS互換)</summary>
                         <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
                             <div style="display: flex; gap: 20px; flex-wrap: wrap;">
                                 <label
@@ -22178,27 +22176,36 @@
                 const { endpoint, apiKey, model, voice, speed } = this.config;
                 if (!endpoint) throw new Error('TTSエンドポイントが未設定です');
 
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {})
-                    },
-                    body: JSON.stringify({
-                        model: model || 'irodori-tts',
-                        input: text,
-                        voice: voice || 'alloy',
-                        speed: parseFloat(speed) || 1.0
-                    })
-                });
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 120000);
 
-                if (!response.ok) throw new Error('TTS APIエラー');
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {})
+                        },
+                        body: JSON.stringify({
+                            model: model || 'irodori-tts',
+                            input: text,
+                            voice: voice || 'alloy',
+                            speed: parseFloat(speed) || 1.0
+                        }),
+                        signal: controller.signal
+                    });
 
-                const blob = await response.blob();
-                const audioUrl = URL.createObjectURL(blob);
-                const audio = new Audio(audioUrl);
-                audio._objectUrl = audioUrl;
-                return audio;
+                    if (!response.ok) throw new Error('TTS APIエラー');
+
+                    const blob = await response.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    const audio = new Audio(audioUrl);
+                    audio._objectUrl = audioUrl;
+                    return audio;
+
+                } finally {
+                    clearTimeout(timeoutId);
+                }
             }
 
             async _processQueue() {

@@ -7042,12 +7042,12 @@
                                 <label
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                                     <input type="checkbox" id="tts_enabled">
-                                    音声読み上げを利用する（各応答に読み上げボタンを表示）
+                                    音声読み上げを使用 (各応答に読み上げボタンを表示)
                                 </label>
                                 <label
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                                     <input type="checkbox" id="tts_auto_speak">
-                                    応答完了時に自動で読み上げる
+                                    音声の自動再生
                                 </label>
                             </div>
                             <div>
@@ -7058,8 +7058,7 @@
                             </div>
 
                             <div>
-                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">APIキー
-                                    (必要な場合):</label>
+                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">APIキー (必要な場合):</label>
                                 <input type="password" id="tts_key" value=""
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                             </div>
@@ -7074,15 +7073,14 @@
 
                                 <div style="flex: 1; min-width: 200px;">
                                     <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
-                                        for="tts_available_voices">利用可能なボイス (カンマ区切り):</label>
+                                        for="tts_available_voices">利用可能ボイス (カンマ区切り):</label>
                                     <input type="text" id="tts_available_voices"
                                         value="alloy,echo,fable,onyx,nova,shimmer"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
                                 <div style="flex: 1; min-width: 150px;">
-                                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">ボイス
-                                        (話者):</label>
+                                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">ボイス (話者):</label>
                                     <select id="tts_voice"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                         <option value="alloy">alloy</option>
@@ -13629,6 +13627,10 @@
                 elements.headerCycleApiKeyBtn.addEventListener('click', () => this.cycleActiveApiKey());
                 elements.footerCycleApiKeyBtn.addEventListener('click', () => this.cycleActiveApiKey());
                 elements.sendButton.addEventListener('click', () => {
+                    const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+                    window.aiTts.audioElement.src = SILENCE;
+                    window.aiTts.audioElement.play().catch(() => { });
+
                     if (state.isSending) this.abortRequest();
                     else this.handleSend();
                 });
@@ -13638,6 +13640,10 @@
                         e.preventDefault();
                         const canSend = state.settings.apiProvider === 'dummy' || !(elements.userInput.value.trim() === '' && state.pendingAttachments.length === 0);
                         if (canSend && !state.isSending) {
+                            const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+                            window.aiTts.audioElement.src = SILENCE;
+                            window.aiTts.audioElement.play().catch(() => { });
+
                             this.handleSend();
                         }
                     }
@@ -22138,9 +22144,8 @@
                 this.config = {};
                 this.queue = [];
                 this.isPlaying = false;
-                this.audioElement = null;
+                this.audioElement = new Audio();
                 this.isStopped = false;
-                this.audioContext = null;
             }
 
             updateConfig(newConfig) {
@@ -22150,7 +22155,7 @@
             stop() {
                 this.isStopped = true;
                 if (this.audioElement) {
-                    this.audioElement.stop();
+                    this.audioElement.pause();
                     this.audioElement = null;
                 }
                 this.queue = [];
@@ -22160,13 +22165,6 @@
             speak(text) {
                 if (!text) return;
                 this.isStopped = false;
-
-                if (!this.audioContext) {
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                } else if (this.audioContext.state === 'suspended') {
-                    this.audioContext.resume();
-                }
-
                 const fetchPromise = this._generateAudio(text);
                 this.queue.push(fetchPromise);
                 this._processQueue();
@@ -22183,7 +22181,7 @@
                         ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {})
                     },
                     body: JSON.stringify({
-                        model: model || 'tts-1',
+                        model: model || 'irodori-tts',
                         input: text,
                         voice: voice || 'alloy',
                         speed: parseFloat(speed) || 1.0
@@ -22192,8 +22190,8 @@
 
                 if (!response.ok) throw new Error('TTS APIエラー');
 
-                const arrayBuffer = await response.arrayBuffer();
-                return arrayBuffer;
+                const blob = await response.blob();
+                return blob;
             }
 
             async _processQueue() {
@@ -22203,32 +22201,31 @@
                 const nextAudioPromise = this.queue.shift();
 
                 try {
-                    const arrayBuffer = await nextAudioPromise;
+                    const blob = await nextAudioPromise;
 
                     if (this.isStopped) {
                         this.isPlaying = false;
                         return;
                     }
 
-                    if (!this.audioContext) {
-                        this.isPlaying = false;
-                        return;
-                    }
+                    const srcUrl = URL.createObjectURL(blob);
+                    this.audioElement.src = srcUrl;
 
-                    const decoded = await this.audioContext.decodeAudioData(arrayBuffer);
-                    const source = this.audioContext.createBufferSource();
-                    source.buffer = decoded;
-                    source.connect(this.audioContext.destination);
+                    this.audioElement.addEventListener('canplay', () => {
+                        this.audioElement.play().catch(e => console.warn('再生エラー:', e));
+                    }, { once: true });
 
-                    this.audioElement = source;
-
-                    source.onended = () => {
-                        this.audioElement = null;
+                    this.audioElement.addEventListener('ended', () => {
+                        URL.revokeObjectURL(srcUrl);
                         this.isPlaying = false;
                         this._processQueue();
-                    };
+                    }, { once: true });
 
-                    source.start(0);
+                    this.audioElement.addEventListener('error', () => {
+                        URL.revokeObjectURL(srcUrl);
+                        this.isPlaying = false;
+                        this._processQueue();
+                    }, { once: true });
 
                 } catch (error) {
                     console.error('TTSキュー処理中にエラーが発生しました:', error);
@@ -22294,14 +22291,13 @@
         function cleanTextForTts(text) {
             if (!text) return '';
             let cleaned = text;
+            // コードブロックを除去（読み上げ向けではないため）
             cleaned = cleaned.replace(/```[\s\S]*?```/g, ' ');
             // 「*」一つで囲まれた斜体テキストは読み上げから除外する（**太字**は除外しない）
             cleaned = cleaned.replace(/(?<!\*)\*(?!\*)([^*]+?)\*(?!\*)/g, '');
             cleaned = cleaned.replace(/\*\*([^*]+?)\*\*/g, '$1');
             cleaned = cleaned.replace(/[ \t]{2,}/g, ' ');
             cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-            // 半角・全角スペースを除去
-            cleaned = cleaned.replace(/[ \u3000]/g, '');
             return cleaned.trim();
         }
 

@@ -22294,14 +22294,14 @@
         function cleanTextForTts(text) {
             if (!text) return '';
             let cleaned = text;
-            // コードブロックを除去（読み上げ向けではないため）
             cleaned = cleaned.replace(/```[\s\S]*?```/g, ' ');
             // 「*」一つで囲まれた斜体テキストは読み上げから除外する（**太字**は除外しない）
             cleaned = cleaned.replace(/(?<!\*)\*(?!\*)([^*]+?)\*(?!\*)/g, '');
-            // 太字記号などのMarkdown装飾記号は読み上げ用に取り除く（テキストは残す）
             cleaned = cleaned.replace(/\*\*([^*]+?)\*\*/g, '$1');
             cleaned = cleaned.replace(/[ \t]{2,}/g, ' ');
             cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+            // 半角・全角スペースを除去
+            cleaned = cleaned.replace(/[ \u3000]/g, '');
             return cleaned.trim();
         }
 

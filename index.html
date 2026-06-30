@@ -22311,6 +22311,22 @@
                 document.getElementById('tts_available_voices').value = savedVoices;
             }
             updateAvailableVoices();
+
+            TTS_PERSIST_KEYS.forEach(({ id, key, type, defaultVal }) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const saved = localStorage.getItem(key);
+                const effective = saved !== null ? saved : (defaultVal !== undefined ? defaultVal : null);
+                if (effective === null) return;
+                if (type === 'bool') {
+                    el.checked = effective === '1';
+                } else {
+                    el.value = effective;
+                }
+            });
+
+            applyTtsEnabledState();
+            syncTtsSettings();
         });
 
         function cleanTextForTts(text) {
@@ -22396,23 +22412,6 @@
         });
 
         document.getElementById('tts_enabled').addEventListener('change', applyTtsEnabledState);
-
-        window.addEventListener('DOMContentLoaded', () => {
-            TTS_PERSIST_KEYS.forEach(({ id, key, type, defaultVal }) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const saved = localStorage.getItem(key);
-                const effective = saved !== null ? saved : (defaultVal !== undefined ? defaultVal : null);
-                if (effective === null) return;
-                if (type === 'bool') {
-                    el.checked = effective === '1';
-                } else {
-                    el.value = effective;
-                }
-            });
-            applyTtsEnabledState();
-            syncTtsSettings();
-        });
 
         appLogic.initializeApp();
     </script>

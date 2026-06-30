@@ -7067,7 +7067,8 @@
                             </div>
 
                             <div>
-                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">APIキー (必要な場合):</label>
+                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">APIキー
+                                    (必要な場合):</label>
                                 <input type="password" id="tts_key" value=""
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                             </div>
@@ -7089,7 +7090,8 @@
                                 </div>
 
                                 <div style="flex: 1; min-width: 150px;">
-                                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">ボイス (話者):</label>
+                                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">ボイス
+                                        (話者):</label>
                                     <select id="tts_voice"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                         <option value="alloy">alloy</option>
@@ -13636,10 +13638,6 @@
                 elements.headerCycleApiKeyBtn.addEventListener('click', () => this.cycleActiveApiKey());
                 elements.footerCycleApiKeyBtn.addEventListener('click', () => this.cycleActiveApiKey());
                 elements.sendButton.addEventListener('click', () => {
-                    const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-                    window.aiTts.audioElement.src = SILENCE;
-                    window.aiTts.audioElement.play().catch(() => { });
-
                     if (state.isSending) this.abortRequest();
                     else this.handleSend();
                 });
@@ -13649,9 +13647,6 @@
                         e.preventDefault();
                         const canSend = state.settings.apiProvider === 'dummy' || !(elements.userInput.value.trim() === '' && state.pendingAttachments.length === 0);
                         if (canSend && !state.isSending) {
-                            const SILENCE = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-                            window.aiTts.audioElement.src = SILENCE;
-                            window.aiTts.audioElement.play().catch(() => { });
 
                             this.handleSend();
                         }
@@ -22153,7 +22148,7 @@
                 this.config = {};
                 this.queue = [];
                 this.isPlaying = false;
-                this.audioElement = new Audio();
+                this.audioElement = null;
                 this.isStopped = false;
             }
 
@@ -22200,7 +22195,10 @@
                 if (!response.ok) throw new Error('TTS APIエラー');
 
                 const blob = await response.blob();
-                return blob;
+                const audioUrl = URL.createObjectURL(blob);
+                const audio = new Audio(audioUrl);
+                audio._objectUrl = audioUrl;
+                return audio;
             }
 
             async _processQueue() {
@@ -22210,31 +22208,42 @@
                 const nextAudioPromise = this.queue.shift();
 
                 try {
-                    const blob = await nextAudioPromise;
+                    const audio = await nextAudioPromise;
 
                     if (this.isStopped) {
+                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
                         this.isPlaying = false;
                         return;
                     }
 
-                    const srcUrl = URL.createObjectURL(blob);
-                    this.audioElement.src = srcUrl;
+                    this.audioElement = audio;
 
-                    this.audioElement.addEventListener('canplay', () => {
-                        this.audioElement.play().catch(e => console.warn('再生エラー:', e));
-                    }, { once: true });
-
-                    this.audioElement.addEventListener('ended', () => {
-                        URL.revokeObjectURL(srcUrl);
+                    try {
+                        await audio.play();
+                    } catch (playError) {
+                        console.warn('音声再生がブロックされました:', playError);
+                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
+                        this.audioElement = null;
                         this.isPlaying = false;
                         this._processQueue();
-                    }, { once: true });
+                        return;
+                    }
 
-                    this.audioElement.addEventListener('error', () => {
-                        URL.revokeObjectURL(srcUrl);
+                    audio.onended = () => {
+                        if (audio._objectUrl) {
+                            URL.revokeObjectURL(audio._objectUrl);
+                        }
+                        this.audioElement = null;
                         this.isPlaying = false;
                         this._processQueue();
-                    }, { once: true });
+                    };
+
+                    audio.onerror = () => {
+                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
+                        this.audioElement = null;
+                        this.isPlaying = false;
+                        this._processQueue();
+                    };
 
                 } catch (error) {
                     console.error('TTSキュー処理中にエラーが発生しました:', error);
@@ -22358,14 +22367,14 @@
         }
 
         const TTS_PERSIST_KEYS = [
-            { id: 'tts_enabled',        key: 'tts_enabled',        type: 'bool' },
-            { id: 'tts_auto_speak',     key: 'tts_auto_speak',     type: 'bool' },
-            { id: 'tts_skip_asterisk',  key: 'tts_skip_asterisk',  type: 'bool', defaultVal: '1' },
-            { id: 'tts_kagi_only',      key: 'tts_kagi_only',      type: 'bool' },
-            { id: 'tts_endpoint',       key: 'tts_endpoint',       type: 'text' },
-            { id: 'tts_key',            key: 'tts_key',            type: 'text' },
-            { id: 'tts_model',          key: 'tts_model',          type: 'text' },
-            { id: 'tts_speed',          key: 'tts_speed',          type: 'text' },
+            { id: 'tts_enabled', key: 'tts_enabled', type: 'bool' },
+            { id: 'tts_auto_speak', key: 'tts_auto_speak', type: 'bool' },
+            { id: 'tts_skip_asterisk', key: 'tts_skip_asterisk', type: 'bool', defaultVal: '1' },
+            { id: 'tts_kagi_only', key: 'tts_kagi_only', type: 'bool' },
+            { id: 'tts_endpoint', key: 'tts_endpoint', type: 'text' },
+            { id: 'tts_key', key: 'tts_key', type: 'text' },
+            { id: 'tts_model', key: 'tts_model', type: 'text' },
+            { id: 'tts_speed', key: 'tts_speed', type: 'text' },
         ];
 
         TTS_PERSIST_KEYS.forEach(({ id, key, type, defaultVal }) => {

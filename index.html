@@ -6916,7 +6916,6 @@
                     </div>
                 </details>
 
-
                 <details class="settings-group" id="settings-group-icons">
                     <summary
                         style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
@@ -7048,6 +7047,16 @@
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
                                     <input type="checkbox" id="tts_auto_speak">
                                     音声の自動再生
+                                </label>
+                                <label
+                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="tts_skip_asterisk" checked>
+                                    *で囲まれた部分を読み上げない
+                                </label>
+                                <label
+                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" id="tts_kagi_only">
+                                    「」の中身だけを読み上げる
                                 </label>
                             </div>
                             <div>
@@ -22291,11 +22300,32 @@
         function cleanTextForTts(text) {
             if (!text) return '';
             let cleaned = text;
-            // コードブロックを除去（読み上げ向けではないため）
+            // コードブロックを除去
             cleaned = cleaned.replace(/```[\s\S]*?```/g, ' ');
-            // 「*」一つで囲まれた斜体テキストは読み上げから除外する（**太字**は除外しない）
-            cleaned = cleaned.replace(/(?<!\*)\*(?!\*)([^*]+?)\*(?!\*)/g, '');
-            cleaned = cleaned.replace(/\*\*([^*]+?)\*\*/g, '$1');
+
+            // 「」の中身だけを読み上げる
+            const kagiOnly = document.getElementById('tts_kagi_only') && document.getElementById('tts_kagi_only').checked;
+            if (kagiOnly) {
+                const matches = [];
+                const re = /「([^」]*)」/g;
+                let m;
+                while ((m = re.exec(cleaned)) !== null) {
+                    matches.push(m[1]);
+                }
+                return matches.join('。');
+            }
+
+            // *で囲まれた部分をスキップ
+            const skipAsterisk = !document.getElementById('tts_skip_asterisk') || document.getElementById('tts_skip_asterisk').checked;
+            if (skipAsterisk) {
+                cleaned = cleaned.replace(/\*\*([^*]+?)\*\*/g, '$1');
+                cleaned = cleaned.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1');
+            } else {
+                // スキップしない場合は記号だけ除去してテキストを残す
+                cleaned = cleaned.replace(/\*\*([^*]+?)\*\*/g, '$1');
+                cleaned = cleaned.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1$2');
+            }
+
             cleaned = cleaned.replace(/[ \t]{2,}/g, ' ');
             cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
             return cleaned.trim();
@@ -22327,27 +22357,46 @@
             document.body.classList.toggle('tts-enabled', !!(enabledCheckbox && enabledCheckbox.checked));
         }
 
-        document.getElementById('tts_enabled').addEventListener('change', () => {
-            localStorage.setItem('tts_enabled', document.getElementById('tts_enabled').checked ? '1' : '0');
-            applyTtsEnabledState();
+        const TTS_PERSIST_KEYS = [
+            { id: 'tts_enabled',        key: 'tts_enabled',        type: 'bool' },
+            { id: 'tts_auto_speak',     key: 'tts_auto_speak',     type: 'bool' },
+            { id: 'tts_skip_asterisk',  key: 'tts_skip_asterisk',  type: 'bool', defaultVal: '1' },
+            { id: 'tts_kagi_only',      key: 'tts_kagi_only',      type: 'bool' },
+            { id: 'tts_endpoint',       key: 'tts_endpoint',       type: 'text' },
+            { id: 'tts_key',            key: 'tts_key',            type: 'text' },
+            { id: 'tts_model',          key: 'tts_model',          type: 'text' },
+            { id: 'tts_speed',          key: 'tts_speed',          type: 'text' },
+        ];
+
+        TTS_PERSIST_KEYS.forEach(({ id, key, type, defaultVal }) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const eventName = (type === 'bool') ? 'change' : 'input';
+            el.addEventListener(eventName, () => {
+                const val = (type === 'bool') ? (el.checked ? '1' : '0') : el.value;
+                localStorage.setItem(key, val);
+                if (type !== 'bool') syncTtsSettings();
+            });
         });
-        document.getElementById('tts_auto_speak').addEventListener('change', () => {
-            localStorage.setItem('tts_auto_speak', document.getElementById('tts_auto_speak').checked ? '1' : '0');
-        });
+
+        document.getElementById('tts_enabled').addEventListener('change', applyTtsEnabledState);
 
         window.addEventListener('DOMContentLoaded', () => {
-            const savedEnabled = localStorage.getItem('tts_enabled');
-            if (savedEnabled !== null) {
-                document.getElementById('tts_enabled').checked = savedEnabled === '1';
-            }
-            const savedAuto = localStorage.getItem('tts_auto_speak');
-            if (savedAuto !== null) {
-                document.getElementById('tts_auto_speak').checked = savedAuto === '1';
-            }
+            TTS_PERSIST_KEYS.forEach(({ id, key, type, defaultVal }) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const saved = localStorage.getItem(key);
+                const effective = saved !== null ? saved : (defaultVal !== undefined ? defaultVal : null);
+                if (effective === null) return;
+                if (type === 'bool') {
+                    el.checked = effective === '1';
+                } else {
+                    el.value = effective;
+                }
+            });
             applyTtsEnabledState();
+            syncTtsSettings();
         });
-
-        document.getElementById('tts_endpoint').addEventListener('input', syncTtsSettings);
 
         appLogic.initializeApp();
     </script>

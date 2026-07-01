@@ -10448,6 +10448,7 @@
                     ttsButton.textContent = '📢';
                     ttsButton.title = 'この文章を読み上げる';
                     ttsButton.classList.add('js-tts-btn');
+                    actionsDiv.appendChild(ttsButton);
 
                     if (role === 'user' || role === 'model') {
                         const retryButton = document.createElement('button');

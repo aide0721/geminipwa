@@ -7035,27 +7035,30 @@
                             style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
                             音声読み上げ設定 (OpenAI TTS互換)</summary>
                         <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
-                            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-                                <label
-                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <label class="checkbox-label">
                                     <input type="checkbox" id="tts_enabled">
-                                    音声読み上げを使用 (各応答に読み上げボタンを表示)
+                                    音声読み上げ機能 (各応答に読み上げボタンを表示)
                                 </label>
-                                <label
-                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <label class="checkbox-label">
                                     <input type="checkbox" id="tts_auto_speak">
                                     音声の自動再生
                                 </label>
-                                <label
-                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <label class="checkbox-label">
                                     <input type="checkbox" id="tts_skip_asterisk" checked>
                                     *で囲まれた部分を読み上げない
                                 </label>
-                                <label
-                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <label class="checkbox-label">
                                     <input type="checkbox" id="tts_kagi_only">
-                                    「」の中身だけを読み上げる
+                                    「」で囲まれた部分だけを読み上げる
                                 </label>
+                            </div>
+                            <div>
+                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">読み方辞書
+                                    (「元の文字=読み方」をカンマまたは改行区切りで複数登録可。元の文字が重複した場合は先に登録した方を優先):</label>
+                                <textarea id="tts_pronunciation_dict" rows="4"
+                                    placeholder="例: ジャスティスⅤ=ジャスティスファイブ&#10;身体=からだ,身体検査=しんたいけんさ"
+                                    style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
                             </div>
                             <div>
                                 <label
@@ -7093,6 +7096,11 @@
                                     <select id="tts_voice"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                         <option value="alloy">alloy</option>
+                                        <option value="echo">echo</option>
+                                        <option value="fable">fable</option>
+                                        <option value="onyx">onyx</option>
+                                        <option value="nova">nova</option>
+                                        <option value="shimmer">shimmer</option>
                                     </select>
                                 </div>
                             </div>
@@ -12522,6 +12530,7 @@
 
             },
             setSendingState(sending) {
+                const wasSending = state.isSending;
                 state.isSending = sending;
                 if (sending) {
                     elements.sendButton.textContent = '止';
@@ -12540,7 +12549,7 @@
                         elements.aiToAiChatBtn.disabled = !showAiToAiBtn;
                     }
                     this.adjustTextareaHeight();
-                    maybeAutoSpeakLatestResponse();
+                    if (wasSending) maybeAutoSpeakLatestResponse();
                 }
                 this.updateLoadingIndicator();
             },
@@ -22318,13 +22327,46 @@
             syncTtsSettings();
         });
 
+        function parsePronunciationDict(raw) {
+            if (!raw) return [];
+            const map = new Map();
+            raw.split(/[,\n]/).forEach(rule => {
+                const trimmed = rule.trim();
+                if (!trimmed) return;
+                const idx = trimmed.indexOf('=');
+                if (idx === -1) return;
+                const from = trimmed.slice(0, idx).trim();
+                const to = trimmed.slice(idx + 1).trim();
+                if (!from || map.has(from)) return;
+                map.set(from, to);
+            });
+            return Array.from(map.entries()).sort((a, b) => b[0].length - a[0].length);
+        }
+
+        function applyPronunciationDict(text) {
+            const dictEl = document.getElementById('tts_pronunciation_dict');
+            if (!dictEl || !dictEl.value) return text;
+
+            const rules = parsePronunciationDict(dictEl.value);
+            if (rules.length === 0) return text;
+
+            const lookup = new Map(rules);
+            const escaped = rules.map(([from]) => from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            const pattern = new RegExp(escaped.join('|'), 'g');
+
+            return text.replace(pattern, (matched) => lookup.get(matched));
+        }
+
         function cleanTextForTts(text) {
             if (!text) return '';
             let cleaned = text;
             // コードブロックを除去
             cleaned = cleaned.replace(/```[\s\S]*?```/g, ' ');
 
-            // 「」の中身だけを読み上げる
+            // 読み方辞書を適用（「」抽出や*除去より前に行う）
+            cleaned = applyPronunciationDict(cleaned);
+
+            // 「」で囲まれた部分だけを読み上げる
             const kagiOnly = document.getElementById('tts_kagi_only') && document.getElementById('tts_kagi_only').checked;
             if (kagiOnly) {
                 const matches = [];
@@ -22383,6 +22425,7 @@
             { id: 'tts_auto_speak', key: 'tts_auto_speak', type: 'bool' },
             { id: 'tts_skip_asterisk', key: 'tts_skip_asterisk', type: 'bool', defaultVal: '1' },
             { id: 'tts_kagi_only', key: 'tts_kagi_only', type: 'bool' },
+            { id: 'tts_pronunciation_dict', key: 'tts_pronunciation_dict', type: 'text' },
             { id: 'tts_endpoint', key: 'tts_endpoint', type: 'text' },
             { id: 'tts_key', key: 'tts_key', type: 'text' },
             { id: 'tts_model', key: 'tts_model', type: 'text' },

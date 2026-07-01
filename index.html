@@ -29,6 +29,8 @@
             --bg-button-delete-hover: #c62828;
             --bg-button-retry: #43a047;
             --bg-button-retry-hover: #2e7d32;
+            --bg-button-tts: #2196f3;
+            --bg-button-tts-hover: #1976d2;
             --bg-button-edit: #ff9800;
             --bg-button-edit-hover: #f57c00;
             --bg-button-copy: #e91e63;
@@ -179,6 +181,8 @@
             --bg-button-delete-hover: #d12c23;
             --bg-button-retry: #34c759;
             --bg-button-retry-hover: #249a41;
+            --bg-button-tts: #29b6f6;
+            --bg-button-tts-hover: #0288d1;
             --bg-button-edit: #ff9500;
             --bg-button-edit-hover: #d17d00;
             --bg-button-copy: #f06292;
@@ -266,6 +270,8 @@
             --bg-button-delete-hover: #f06060;
             --bg-button-retry: #a0eade;
             --bg-button-retry-hover: #88d8c0;
+            --bg-button-tts: #90caf9;
+            --bg-button-tts-hover: #64b5f6;
             --bg-button-edit: #ffc974;
             --bg-button-edit-hover: #ffbd59;
             --bg-button-copy: #e5a9f0;
@@ -370,6 +376,8 @@
             --bg-button-delete-hover: #ff6a6a;
             --bg-button-retry: #98fb98;
             --bg-button-retry-hover: #82f082;
+            --bg-button-tts: #4a90e2;
+            --bg-button-tts-hover: #3f7fc4;
             --bg-button-edit: #ffe082;
             --bg-button-edit-hover: #ffda6b;
             --bg-button-copy: #bca0dc;
@@ -474,6 +482,8 @@
             --bg-button-delete-hover: #ff8c69;
             --bg-button-retry: #b0e57c;
             --bg-button-retry-hover: #9acd32;
+            --bg-button-tts: #64b5f6;
+            --bg-button-tts-hover: #42a5f5;
             --bg-button-edit: #ffa500;
             --bg-button-edit-hover: #ff8c00;
             --bg-button-copy: #ffb6c1;
@@ -562,6 +572,8 @@
             --bg-button-delete-hover: #d81b60;
             --bg-button-retry: #81c784;
             --bg-button-retry-hover: #66bb6a;
+            --bg-button-tts: #7986cb;
+            --bg-button-tts-hover: #5c6bc0;
             --bg-button-edit: #ffb74d;
             --bg-button-edit-hover: #ffa726;
             --bg-button-copy: #7e57c2;
@@ -650,6 +662,8 @@
             --bg-button-delete-hover: #ff6060;
             --bg-button-retry: #80ff80;
             --bg-button-retry-hover: #60e060;
+            --bg-button-tts: #42a5f5;
+            --bg-button-tts-hover: #1e88e5;
             --bg-button-edit: #ffc080;
             --bg-button-edit-hover: #ffa060;
             --bg-button-copy: #c080ff;
@@ -784,6 +798,8 @@
             --bg-button-update-hover: #2D7FD4;
             --bg-button-retry: #2D7FD4;
             --bg-button-retry-hover: #2D7FD4;
+            --bg-button-tts: #4fc3f7;
+            --bg-button-tts-hover: #29b6f6;
 
             /* [7] データ操作系ボタン */
             --bg-button-copy: #F5488A;
@@ -2052,11 +2068,11 @@
         }
 
         .message-actions .js-tts-btn {
-            background-color: var(--bg-button-retry);
+            background-color: var(--bg-button-tts);
         }
 
         .message-actions .js-tts-btn:hover {
-            background-color: var(--bg-button-retry-hover);
+            background-color: var(--bg-button-tts-hover);
         }
 
         .message-actions .js-tts-btn.tts-speaking {
@@ -2762,6 +2778,15 @@
             width: auto;
             margin-bottom: 0;
             cursor: pointer;
+        }
+
+        .checkbox-label.is-disabled {
+            color: var(--text-disabled);
+            cursor: not-allowed;
+        }
+
+        .checkbox-label.is-disabled input[type="checkbox"] {
+            cursor: not-allowed;
         }
 
         .param-grid {
@@ -7034,7 +7059,8 @@
                         <summary
                             style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">
                             音声読み上げ設定 (OpenAI TTS互換)</summary>
-                        <div style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px;">
+                        <div
+                            style="display: flex; flex-direction: column; gap: 10px; padding-left: 5px; margin-top: 15px;">
                             <div style="display: flex; flex-direction: column; gap: 4px;">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="tts_enabled">
@@ -7045,12 +7071,12 @@
                                     音声の自動再生
                                 </label>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" id="tts_skip_asterisk" checked>
-                                    *で囲まれた部分を読み上げない
+                                    <input type="checkbox" id="tts_kagi_only">
+                                    「」の中身だけを読み上げる
                                 </label>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" id="tts_kagi_only">
-                                    「」で囲まれた部分だけを読み上げる
+                                    <input type="checkbox" id="tts_skip_asterisk" checked>
+                                    *で囲まれた部分を読み上げない
                                 </label>
                             </div>
                             <div>
@@ -10418,13 +10444,10 @@
                     copyButton.classList.add('js-copy-btn');
                     actionsDiv.appendChild(copyButton);
 
-                    if (role === 'model') {
-                        const ttsButton = document.createElement('button');
-                        ttsButton.textContent = '読み上げ';
-                        ttsButton.title = 'このメッセージを読み上げる';
-                        ttsButton.classList.add('js-tts-btn');
-                        actionsDiv.appendChild(ttsButton);
-                    }
+                    const ttsButton = document.createElement('button');
+                    ttsButton.textContent = '📢';
+                    ttsButton.title = 'この文章を読み上げる';
+                    ttsButton.classList.add('js-tts-btn');
 
                     if (role === 'user' || role === 'model') {
                         const retryButton = document.createElement('button');
@@ -18233,7 +18256,7 @@
 
                 if (buttonElement) {
                     const originalText = buttonElement.textContent;
-                    buttonElement.textContent = '読み上げ中';
+                    buttonElement.textContent = '🔊';
                     buttonElement.classList.add('tts-speaking');
                     setTimeout(() => {
                         buttonElement.textContent = originalText;
@@ -22418,6 +22441,28 @@
         function applyTtsEnabledState() {
             const enabledCheckbox = document.getElementById('tts_enabled');
             document.body.classList.toggle('tts-enabled', !!(enabledCheckbox && enabledCheckbox.checked));
+            updateTtsCheckboxStates();
+        }
+
+        function updateTtsCheckboxStates() {
+            const enabledCheckbox = document.getElementById('tts_enabled');
+            const autoCheckbox = document.getElementById('tts_auto_speak');
+            const kagiCheckbox = document.getElementById('tts_kagi_only');
+            const asteriskCheckbox = document.getElementById('tts_skip_asterisk');
+            if (!enabledCheckbox || !autoCheckbox || !kagiCheckbox || !asteriskCheckbox) return;
+
+            const enabled = enabledCheckbox.checked;
+            const kagiOnly = kagiCheckbox.checked;
+
+            const setDisabled = (checkbox, disabled) => {
+                checkbox.disabled = disabled;
+                const label = checkbox.closest('.checkbox-label');
+                if (label) label.classList.toggle('is-disabled', disabled);
+            };
+
+            setDisabled(autoCheckbox, !enabled);
+            setDisabled(kagiCheckbox, !enabled);
+            setDisabled(asteriskCheckbox, !enabled || kagiOnly);
         }
 
         const TTS_PERSIST_KEYS = [
@@ -22429,6 +22474,7 @@
             { id: 'tts_endpoint', key: 'tts_endpoint', type: 'text' },
             { id: 'tts_key', key: 'tts_key', type: 'text' },
             { id: 'tts_model', key: 'tts_model', type: 'text' },
+            { id: 'tts_voice', key: 'tts_voice', type: 'text' },
             { id: 'tts_speed', key: 'tts_speed', type: 'text' },
         ];
 
@@ -22444,6 +22490,7 @@
         });
 
         document.getElementById('tts_enabled').addEventListener('change', applyTtsEnabledState);
+        document.getElementById('tts_kagi_only').addEventListener('change', updateTtsCheckboxStates);
 
         appLogic.initializeApp();
     </script>

@@ -22146,8 +22146,16 @@
                 this.config = {};
                 this.queue = [];
                 this.isPlaying = false;
-                this.audioElement = null;
                 this.isStopped = false;
+                this.player = new Audio();
+                this.unlocked = false;
+            }
+
+            unlock() {
+                if (this.unlocked) return;
+                this.unlocked = true;
+                this.player.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
+                this.player.play().catch(() => { });
             }
 
             updateConfig(newConfig) {
@@ -22156,10 +22164,8 @@
 
             stop() {
                 this.isStopped = true;
-                if (this.audioElement) {
-                    this.audioElement.pause();
-                    this.audioElement = null;
-                }
+                this.player.pause();
+                this.audioElement = null;
                 this.queue = [];
                 this.isPlaying = false;
             }
@@ -22195,14 +22201,13 @@
                         signal: controller.signal
                     });
 
-                    if (!response.ok) throw new Error('TTS APIエラー');
+                    if (!response.ok) {
+                        const errBody = await response.text().catch(() => '');
+                        throw new Error(`TTS APIエラー: ${response.status} ${errBody.slice(0, 200)}`);
+                    }
 
                     const blob = await response.blob();
-                    const audioUrl = URL.createObjectURL(blob);
-                    const audio = new Audio(audioUrl);
-                    audio._objectUrl = audioUrl;
-                    return audio;
-
+                    return URL.createObjectURL(blob);
                 } finally {
                     clearTimeout(timeoutId);
                 }
@@ -22212,45 +22217,45 @@
                 if (this.isPlaying || this.queue.length === 0) return;
 
                 this.isPlaying = true;
-                const nextAudioPromise = this.queue.shift();
+                const nextUrlPromise = this.queue.shift();
 
                 try {
-                    const audio = await nextAudioPromise;
+                    const url = await nextUrlPromise;
 
                     if (this.isStopped) {
-                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
+                        URL.revokeObjectURL(url);
                         this.isPlaying = false;
                         return;
                     }
 
-                    this.audioElement = audio;
+                    this.player.src = url;
+                    this.audioElement = this.player;
+
+                    this.player.onended = () => {
+                        URL.revokeObjectURL(url);
+                        this.audioElement = null;
+                        this.isPlaying = false;
+                        this._processQueue();
+                    };
+
+                    this.player.onerror = () => {
+                        console.error('音声デコード/再生エラー:', this.player.error && this.player.error.code);
+                        URL.revokeObjectURL(url);
+                        this.audioElement = null;
+                        this.isPlaying = false;
+                        this._processQueue();
+                    };
 
                     try {
-                        await audio.play();
+                        await this.player.play();
                     } catch (playError) {
-                        console.warn('音声再生がブロックされました:', playError);
-                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
+                        console.warn('play()拒否:', playError.name, playError.message);
+                        URL.revokeObjectURL(url);
                         this.audioElement = null;
                         this.isPlaying = false;
                         this._processQueue();
                         return;
                     }
-
-                    audio.onended = () => {
-                        if (audio._objectUrl) {
-                            URL.revokeObjectURL(audio._objectUrl);
-                        }
-                        this.audioElement = null;
-                        this.isPlaying = false;
-                        this._processQueue();
-                    };
-
-                    audio.onerror = () => {
-                        if (audio._objectUrl) URL.revokeObjectURL(audio._objectUrl);
-                        this.audioElement = null;
-                        this.isPlaying = false;
-                        this._processQueue();
-                    };
 
                 } catch (error) {
                     console.error('TTSキュー処理中にエラーが発生しました:', error);
@@ -22261,6 +22266,10 @@
         }
 
         window.aiTts = new SimpleOpenAITts();
+
+        ['click', 'keydown', 'touchend'].forEach(ev =>
+            document.addEventListener(ev, () => window.aiTts.unlock(), { capture: true })
+        );
 
         syncTtsSettings();
 

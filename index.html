@@ -22147,25 +22147,31 @@
                 this.queue = [];
                 this.isPlaying = false;
                 this.isStopped = false;
-                this.player = new Audio();
-                this.unlocked = false;
+                this.audioCtx = null;
+                this.currentSource = null;
+            }
+
+            _ensureCtx() {
+                if (!this.audioCtx) {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    this.audioCtx = new AC();
+                }
+                return this.audioCtx;
             }
 
             unlock() {
-                if (this.unlocked) return;
-                this.unlocked = true;
-                this.player.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAgD4AAAB9AAACABAAZGF0YQAAAAA=';
-                this.player.play().catch(() => { });
+                const ctx = this._ensureCtx();
+                if (ctx.state === 'suspended') ctx.resume().catch(() => { });
             }
 
-            updateConfig(newConfig) {
-                this.config = { ...this.config, ...newConfig };
-            }
+            updateConfig(newConfig) { this.config = { ...this.config, ...newConfig }; }
 
             stop() {
                 this.isStopped = true;
-                this.player.pause();
-                this.audioElement = null;
+                if (this.currentSource) {
+                    try { this.currentSource.stop(); } catch (e) { }
+                    this.currentSource = null;
+                }
                 this.queue = [];
                 this.isPlaying = false;
             }
@@ -22173,18 +22179,15 @@
             speak(text) {
                 if (!text) return;
                 this.isStopped = false;
-                const fetchPromise = this._generateAudio(text);
-                this.queue.push(fetchPromise);
+                this.queue.push(this._generateAudioData(text));
                 this._processQueue();
             }
 
-            async _generateAudio(text) {
+            async _generateAudioData(text) {
                 const { endpoint, apiKey, model, voice, speed } = this.config;
                 if (!endpoint) throw new Error('TTSエンドポイントが未設定です');
-
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 120000);
-
                 try {
                     const response = await fetch(endpoint, {
                         method: 'POST',
@@ -22200,14 +22203,11 @@
                         }),
                         signal: controller.signal
                     });
-
                     if (!response.ok) {
                         const errBody = await response.text().catch(() => '');
                         throw new Error(`TTS APIエラー: ${response.status} ${errBody.slice(0, 200)}`);
                     }
-
-                    const blob = await response.blob();
-                    return URL.createObjectURL(blob);
+                    return await response.arrayBuffer();
                 } finally {
                     clearTimeout(timeoutId);
                 }
@@ -22215,50 +22215,30 @@
 
             async _processQueue() {
                 if (this.isPlaying || this.queue.length === 0) return;
-
                 this.isPlaying = true;
-                const nextUrlPromise = this.queue.shift();
-
+                const nextPromise = this.queue.shift();
                 try {
-                    const url = await nextUrlPromise;
+                    const arrayBuffer = await nextPromise;
+                    if (this.isStopped) { this.isPlaying = false; return; }
 
-                    if (this.isStopped) {
-                        URL.revokeObjectURL(url);
-                        this.isPlaying = false;
-                        return;
-                    }
+                    const ctx = this._ensureCtx();
+                    if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { } }
 
-                    this.player.src = url;
-                    this.audioElement = this.player;
+                    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                    if (this.isStopped) { this.isPlaying = false; return; }
 
-                    this.player.onended = () => {
-                        URL.revokeObjectURL(url);
-                        this.audioElement = null;
-                        this.isPlaying = false;
-                        this._processQueue();
-                    };
-
-                    this.player.onerror = () => {
-                        console.error('音声デコード/再生エラー:', this.player.error && this.player.error.code);
-                        URL.revokeObjectURL(url);
-                        this.audioElement = null;
+                    const source = ctx.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(ctx.destination);
+                    this.currentSource = source;
+                    source.onended = () => {
+                        this.currentSource = null;
                         this.isPlaying = false;
                         this._processQueue();
                     };
-
-                    try {
-                        await this.player.play();
-                    } catch (playError) {
-                        console.warn('play()拒否:', playError.name, playError.message);
-                        URL.revokeObjectURL(url);
-                        this.audioElement = null;
-                        this.isPlaying = false;
-                        this._processQueue();
-                        return;
-                    }
-
+                    source.start(0);
                 } catch (error) {
-                    console.error('TTSキュー処理中にエラーが発生しました:', error);
+                    console.error('TTS再生エラー:', error);
                     this.isPlaying = false;
                     this._processQueue();
                 }

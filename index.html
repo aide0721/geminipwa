@@ -5023,7 +5023,7 @@
 
     <script src="marked.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.3/dist/mermaid.min.js"></script>
 </head>
 
 <body>
@@ -5100,7 +5100,10 @@
                         const deleteRequest = indexedDB.deleteDatabase('GeminiPWA_DB');
                         deleteRequest.onsuccess = () => resolve();
                         deleteRequest.onerror = () => reject();
-                        deleteRequest.onblocked = () => window.location.reload();
+                        deleteRequest.onblocked = () => {
+                            alert('他のタブでこのアプリが開かれているため、データを削除できません。\n他のタブをすべて閉じてから、もう一度お試しください。');
+                            reject(new Error('IndexedDB deletion blocked'));
+                        };
                     });
                 } catch (e) { }
 
@@ -7080,11 +7083,14 @@
                                 </label>
                             </div>
                             <div>
-                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">読み方辞書
-                                    (「元の文字=読み方」をカンマまたは改行区切りで複数登録可。元の文字が重複した場合は先に登録した方を優先):</label>
+                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">読み方辞書:</label>
                                 <textarea id="tts_pronunciation_dict" rows="4"
-                                    placeholder="例: ジャスティスⅤ=ジャスティスファイブ&#10;身体=からだ,身体検査=しんたいけんさ"
+                                    placeholder="例:&#10;ジャスティスⅤ=ジャスティスファイブ&#10;身体=からだ,身体検査=しんたいけんさ"
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
+                                <p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
+                                    ※「元の文字=読み方」をカンマまたは改行区切りで複数登録可<br>
+                                    ※元の文字が重複した場合は先に登録した方を優先
+                                </p>
                             </div>
                             <div>
                                 <label
@@ -10692,7 +10698,7 @@
                 mermaid.initialize({
                     startOnLoad: false,
                     theme: currentTheme,
-                    securityLevel: 'loose',
+                    securityLevel: 'strict',
                     fontFamily: 'var(--font-family)',
                     flowchart: { useMaxWidth: true, htmlLabels: true },
                     sequence: { useMaxWidth: true },
@@ -10833,7 +10839,9 @@
                     diagramDiv.id = uniqueId;
 
                     const { svg } = await mermaid.render(uniqueId + '-svg', mermaidCode);
-                    diagramDiv.innerHTML = svg;
+                    diagramDiv.innerHTML = (typeof DOMPurify !== 'undefined')
+                        ? DOMPurify.sanitize(svg, { USE_PROFILES: { svg: true, svgFilters: true, html: true } })
+                        : svg;
 
                     const svgElement = diagramDiv.querySelector('svg');
                     if (svgElement) {
@@ -13417,7 +13425,7 @@
                         marked.setOptions({ breaks: true, gfm: true, sanitize: false, smartypants: false });
                     }
                     if (typeof mermaid !== 'undefined') {
-                        mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'loose', fontFamily: 'var(--font-family)', flowchart: { useMaxWidth: true, htmlLabels: true }, sequence: { useMaxWidth: true }, gantt: { useMaxWidth: true }, journey: { useMaxWidth: true }, pie: { useMaxWidth: true } });
+                        mermaid.initialize({ startOnLoad: false, theme: 'default', securityLevel: 'strict', fontFamily: 'var(--font-family)', flowchart: { useMaxWidth: true, htmlLabels: true }, sequence: { useMaxWidth: true }, gantt: { useMaxWidth: true }, journey: { useMaxWidth: true }, pie: { useMaxWidth: true } });
                     }
                     elements.appVersionSpan.textContent = APP_VERSION;
                     window.addEventListener('beforeinstallprompt', (event) => { event.preventDefault(); });
@@ -16439,18 +16447,18 @@
                 try {
                     let apiResponseObject;
                     if (selectedApiProvider === 'gemini') {
-                        apiResponseObject = await apiUtils.callGeminiApi(apiKeyToUse, modelNameToUse, apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, usePseudoForThisCall, contextGeminiEnableGrounding);
+                        apiResponseObject = await apiUtils.callGeminiApi(apiKeyToUse, modelNameToUse, apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, usePseudoForThisCall, contextGeminiEnableGrounding, !isBackgroundProcess);
                     } else if (selectedApiProvider === 'deepseek' || selectedApiProvider === 'llmaggregator') {
-                        apiResponseObject = await apiUtils.callDeepSeekApi(apiKeyToUse, modelNameToUse, apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, selectedApiProvider);
+                        apiResponseObject = await apiUtils.callDeepSeekApi(apiKeyToUse, modelNameToUse, apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, selectedApiProvider, !isBackgroundProcess);
                     } else if (selectedApiProvider === 'claude') {
                         apiResponseObject = await apiUtils.callClaudeApi(apiKeyToUse, modelNameToUse, apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall);
                     } else if (selectedApiProvider === 'openai') {
                         const hasImage = apiMessages.some(m => m.parts.some(p => p.inlineData && p.inlineData.mimeType.startsWith('image/')));
-                        apiResponseObject = await apiUtils.callOpenAICompatibleApi(apiKeyToUse, modelNameToUse, 'openai', apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, hasImage);
+                        apiResponseObject = await apiUtils.callOpenAICompatibleApi(apiKeyToUse, modelNameToUse, 'openai', apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, hasImage, !isBackgroundProcess);
                     } else if (selectedApiProvider === 'xai') {
                         const hasImage = apiMessages.some(m => m.parts.some(p => p.inlineData && p.inlineData.mimeType.startsWith('image/')));
                         const enableVisionForThisCall = contextXaiVisionEnable || hasImage;
-                        apiResponseObject = await apiUtils.callXaiApi(apiKeyToUse, modelNameToUse, apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, enableVisionForThisCall);
+                        apiResponseObject = await apiUtils.callXaiApi(apiKeyToUse, modelNameToUse, apiMessages, commonGenerationConfig, systemInstructionForProvider, useStreamingForThisCall, enableVisionForThisCall, !isBackgroundProcess);
                     } else {
                         throw new Error("不明なAPIプロバイダーが選択されています。");
                     }
@@ -19833,20 +19841,21 @@
             }
         };
         const apiUtils = {
-            async callGeminiApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming, usePseudo, enableGrounding) {
+            async callGeminiApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming, usePseudo, enableGrounding, trackAbort = true) {
                 if (!apiKey) {
                     throw new Error("APIキーが設定されていません。");
                 }
                 let baseUrl = GEMINI_API_BASE_URL;
 
-                state.abortController = new AbortController();
-                const { signal } = state.abortController;
+                const abortController = new AbortController();
+                if (trackAbort) state.abortController = abortController;
+                const { signal } = abortController;
 
                 let endpointMethod = useStreaming
-                    ? (usePseudo ? 'generateContent?alt=sse&' : 'streamGenerateContent?alt=sse&')
-                    : 'generateContent?';
+                    ? (usePseudo ? 'generateContent?alt=sse' : 'streamGenerateContent?alt=sse')
+                    : 'generateContent';
 
-                const endpoint = `${baseUrl}${model}:${endpointMethod}key=${apiKey}`;
+                const endpoint = `${baseUrl}${model}:${endpointMethod}`;
 
                 const finalGenerationConfig = { ...generationConfig };
                 if (state.settings.geminiThinkingBudget !== null || state.settings.geminiIncludeThoughts) {
@@ -19883,7 +19892,7 @@
                 try {
                     const response = await fetch(endpoint, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
                         body: JSON.stringify(requestBody),
                         signal
                     });
@@ -20048,7 +20057,7 @@
                     }
                 }
             },
-            async callDeepSeekApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming, provider = 'deepseek') {
+            async callDeepSeekApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming, provider = 'deepseek', trackAbort = true) {
                 let baseUrl;
                 if (provider === 'llmaggregator') {
                     const activeBackend = multiBackendUtils.getActiveBackend();
@@ -20063,8 +20072,9 @@
                 if (!apiKey) {
                     throw new Error(`${provider.toUpperCase()} APIキーが設定されていません。`);
                 }
-                state.abortController = new AbortController();
-                const { signal } = state.abortController;
+                const abortController = new AbortController();
+                if (trackAbort) state.abortController = abortController;
+                const { signal } = abortController;
 
                 const endpoint = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
 
@@ -20229,12 +20239,13 @@
                     }
                 }
             },
-            async callClaudeApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming) {
+            async callClaudeApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming, trackAbort = true) {
                 if (!apiKey) {
                     throw new Error("Claude APIキーが設定されていません。");
                 }
-                state.abortController = new AbortController();
-                const { signal } = state.abortController;
+                const abortController = new AbortController();
+                if (trackAbort) state.abortController = abortController;
+                const { signal } = abortController;
 
                 const baseUrl = CLAUDE_API_BASE_URL;
 
@@ -20477,7 +20488,7 @@
 
                 return body;
             },
-            async callOpenAICompatibleApi(apiKey, model, provider, messagesForApi, generationConfig, systemInstruction, useStreaming, enableVision) {
+            async callOpenAICompatibleApi(apiKey, model, provider, messagesForApi, generationConfig, systemInstruction, useStreaming, enableVision, trackAbort = true) {
                 let baseUrl;
 
                 if (provider === 'openai') {
@@ -20495,8 +20506,9 @@
                     throw new Error(`${provider} のAPIキーが設定されていません。`);
                 }
 
-                state.abortController = new AbortController();
-                const { signal } = state.abortController;
+                const abortController = new AbortController();
+                if (trackAbort) state.abortController = abortController;
+                const { signal } = abortController;
 
                 const headers = {
                     "Content-Type": "application/json",
@@ -20611,12 +20623,13 @@
                     }
                 }
             },
-            async callXaiApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming, enableVision) {
+            async callXaiApi(apiKey, model, messagesForApi, generationConfig, systemInstruction, useStreaming, enableVision, trackAbort = true) {
                 if (!apiKey) {
                     throw new Error("xAI APIキーが設定されていません。");
                 }
-                state.abortController = new AbortController();
-                const { signal } = state.abortController;
+                const abortController = new AbortController();
+                if (trackAbort) state.abortController = abortController;
+                const { signal } = abortController;
 
                 const headers = {
                     "Content-Type": "application/json",

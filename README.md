@@ -6,6 +6,7 @@
 ## ■ 利用方法（PWA）
 -  当PWAはブラウザから以下のURLにて利用可能です：
 https://aide0721.github.io/geminipwa/#chat
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aide0721/geminipwa/blob/main/colab.ipynb)
 -  使い方や分からないことがあれば、このリポジトリの「index.html」ファイルの内容をGoogle AI Studio等でAIにご提示の上お尋ねください。
 -  質問例: 「このPWAの初めての使い方を教えて」「APIキー・システムプロンプト・ダミープロンプトって何？」「ユーザーデータの扱いはどうなってる？」
 

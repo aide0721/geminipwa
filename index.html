@@ -22190,11 +22190,16 @@
         class SimpleOpenAITts {
             constructor() {
                 this.config = {};
-                this.queue = [];
+                this.queue = [];            // [{ text, promise }] チャンク単位のキュー
                 this.isPlaying = false;
                 this.isStopped = false;
                 this.audioCtx = null;
                 this.currentSource = null;
+                this.generation = 0;        // stop()で無効化する世代カウンタ
+                this.maxChunkLength = 150;  // 1リクエストあたりの最大文字数
+                this.prefetchCount = 2;     // 再生中に先読み生成しておくチャンク数
+                this.maxRetries = 2;        // チャンク単位のリトライ回数
+                this.requestTimeoutMs = 120000;
             }
 
             _ensureCtx() {
@@ -22214,6 +22219,7 @@
 
             stop() {
                 this.isStopped = true;
+                this.generation++;
                 if (this.currentSource) {
                     try { this.currentSource.stop(); } catch (e) { }
                     this.currentSource = null;
@@ -22222,18 +22228,97 @@
                 this.isPlaying = false;
             }
 
+            _splitText(text) {
+                const sentences = [];
+                // 文末記号(。！？!?)+閉じ括弧、または改行で区切る
+                const re = /[^。．！？!?\n]*[。．！？!?]+[」』）)"'\u201d]*|[^。．！？!?\n]+(?=\n|$)/g;
+                let m;
+                while ((m = re.exec(text)) !== null) {
+                    const s = m[0].trim();
+                    if (s) sentences.push(s);
+                }
+                if (sentences.length === 0) {
+                    const t = text.trim();
+                    if (t) sentences.push(t);
+                }
+
+                // 1文がmaxChunkLengthを超える場合は読点等でさらに分割
+                const pieces = [];
+                for (const s of sentences) {
+                    if (s.length <= this.maxChunkLength) { pieces.push(s); continue; }
+                    let rest = s;
+                    while (rest.length > this.maxChunkLength) {
+                        let cut = -1;
+                        for (const d of ['、', '，', ',', ' ', '　']) {
+                            const idx = rest.lastIndexOf(d, this.maxChunkLength);
+                            if (idx > cut) cut = idx;
+                        }
+                        if (cut < Math.floor(this.maxChunkLength * 0.3)) cut = this.maxChunkLength - 1;
+                        pieces.push(rest.slice(0, cut + 1).trim());
+                        rest = rest.slice(cut + 1);
+                    }
+                    if (rest.trim()) pieces.push(rest.trim());
+                }
+
+                // 短い文は結合してリクエスト回数を減らす
+                const chunks = [];
+                let buf = '';
+                for (const p of pieces) {
+                    if (buf && (buf.length + p.length) > this.maxChunkLength) {
+                        chunks.push(buf);
+                        buf = p;
+                    } else {
+                        buf = buf ? buf + p : p;
+                    }
+                }
+                if (buf) chunks.push(buf);
+                return chunks;
+            }
+
             speak(text) {
                 if (!text) return;
                 this.isStopped = false;
-                this.queue.push(this._generateAudioData(text));
+                const gen = this.generation;
+                for (const chunk of this._splitText(text)) {
+                    this.queue.push({ text: chunk, promise: null, gen });
+                }
+                this._prefetch();
                 this._processQueue();
+            }
+
+            _prefetch() {
+                const n = Math.min(this.prefetchCount + (this.isPlaying ? 0 : 1), this.queue.length);
+                for (let i = 0; i < n; i++) {
+                    const item = this.queue[i];
+                    if (!item.promise) {
+                        item.promise = this._generateWithRetry(item.text);
+                        item.promise.catch(() => { });
+                    }
+                }
+            }
+
+            async _generateWithRetry(text) {
+                let lastError;
+                for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+                    if (this.isStopped) throw new Error('停止されました');
+                    try {
+                        return await this._generateAudioData(text);
+                    } catch (error) {
+                        lastError = error;
+                        console.warn(`TTS生成失敗 (試行 ${attempt + 1}/${this.maxRetries + 1}):`, error.message);
+                        if (attempt < this.maxRetries) {
+                            await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                        }
+                    }
+                }
+                throw lastError;
             }
 
             async _generateAudioData(text) {
                 const { endpoint, apiKey, model, voice, speed } = this.config;
                 if (!endpoint) throw new Error('TTSエンドポイントが未設定です');
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 120000);
+                const timeoutId = setTimeout(() => controller.abort(), this.requestTimeoutMs);
                 try {
                     const response = await fetch(endpoint, {
                         method: 'POST',
@@ -22245,6 +22330,7 @@
                             model: model || 'irodori-tts',
                             input: text,
                             voice: voice || 'alloy',
+                            response_format: 'wav',
                             speed: parseFloat(speed) || 1.0
                         }),
                         signal: controller.signal
@@ -22253,7 +22339,15 @@
                         const errBody = await response.text().catch(() => '');
                         throw new Error(`TTS APIエラー: ${response.status} ${errBody.slice(0, 200)}`);
                     }
-                    return await response.arrayBuffer();
+                    const arrayBuffer = await response.arrayBuffer();
+                    const expected = parseInt(response.headers.get('content-length') || '0', 10);
+                    if (expected > 0 && arrayBuffer.byteLength < expected) {
+                        throw new Error(`受信データが不完全です (${arrayBuffer.byteLength}/${expected} bytes)`);
+                    }
+                    if (arrayBuffer.byteLength === 0) {
+                        throw new Error('空のレスポンスを受信しました');
+                    }
+                    return arrayBuffer;
                 } finally {
                     clearTimeout(timeoutId);
                 }
@@ -22262,16 +22356,21 @@
             async _processQueue() {
                 if (this.isPlaying || this.queue.length === 0) return;
                 this.isPlaying = true;
-                const nextPromise = this.queue.shift();
+                const item = this.queue.shift();
+                const gen = this.generation;
+                this._prefetch();
                 try {
-                    const arrayBuffer = await nextPromise;
-                    if (this.isStopped) { this.isPlaying = false; return; }
+                    if (!item.promise) {
+                        item.promise = this._generateWithRetry(item.text);
+                    }
+                    const arrayBuffer = await item.promise;
+                    if (this.isStopped || gen !== this.generation) { this.isPlaying = false; return; }
 
                     const ctx = this._ensureCtx();
                     if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { } }
 
                     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-                    if (this.isStopped) { this.isPlaying = false; return; }
+                    if (this.isStopped || gen !== this.generation) { this.isPlaying = false; return; }
 
                     const source = ctx.createBufferSource();
                     source.buffer = audioBuffer;
@@ -22284,7 +22383,7 @@
                     };
                     source.start(0);
                 } catch (error) {
-                    console.error('TTS再生エラー:', error);
+                    console.error('TTS再生エラー(このチャンクをスキップします):', error);
                     this.isPlaying = false;
                     this._processQueue();
                 }

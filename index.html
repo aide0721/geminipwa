@@ -9793,11 +9793,6 @@
             return result;
         }
 
-        /**
-         * 固有名詞リストから正規化マップを作成する
-         * @param {string} namesList - カンマ区切りの固有名詞リスト
-         * @returns {Map<string, string>} 正規化された名前をキー、元の名前を値とするマップ
-         */
         function getNormalizationMap(namesList) {
             const map = new Map();
             if (!namesList) return map;
@@ -9815,12 +9810,6 @@
             return map;
         }
 
-        /**
-                 * 2つの文字列間のレーベンシュタイン距離を計算する
-                 * @param {string} a 比較する文字列1
-                 * @param {string} b 比較する文字列2
-                 * @returns {number} 編集距離 (整数)
-                 */
         function levenshteinDistance(a, b) {
             if (a.length === 0) return b.length;
             if (b.length === 0) return a.length;
@@ -18054,11 +18043,8 @@
                 this.uncollapseMessage(index, messageElement);
             },
             async saveEditMessage(originalIndex, messageElement) {
-                // DOM上の位置から最新のインデックスを取得し直す
                 const currentIndex = parseInt(messageElement.dataset.index, 10);
-                // 念のため配列範囲チェック
                 if (isNaN(currentIndex) || !state.currentMessages[currentIndex]) {
-                    // 見つからない場合は強制終了（UIだけ戻す）
                     this.finishEditing(messageElement);
                     return;
                 }

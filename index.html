@@ -7083,11 +7083,13 @@
                                 </label>
                             </div>
                             <div>
-                                <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;">読み方辞書:</label>
+                                <label
+                                    style="font-size: 14px; color: var(--text-primary); font-weight: bold;">読み方辞書:</label>
                                 <textarea id="tts_pronunciation_dict" rows="4"
                                     placeholder="例:&#10;ジャスティスⅤ=ジャスティスファイブ&#10;身体=からだ,身体検査=しんたいけんさ"
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
-                                <p style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
+                                <p
+                                    style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
                                     ※「元の文字=読み方」をカンマまたは改行区切りで複数登録可<br>
                                     ※元の文字が重複した場合は先に登録した方を優先
                                 </p>
@@ -7096,6 +7098,7 @@
                                 <label
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold;">エンドポイントURL:</label>
                                 <input type="text" id="tts_endpoint" value="/v1/audio/speech"
+                                    placeholder="https://XXX/v1/audio/speech"
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                             </div>
 
@@ -7117,8 +7120,8 @@
                                 <div style="flex: 1; min-width: 200px;">
                                     <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
                                         for="tts_available_voices">利用可能ボイス (カンマ区切り):</label>
-                                    <input type="text" id="tts_available_voices"
-                                        value="alloy,echo,fable,onyx,nova,shimmer"
+                                    <input type="text" id="tts_available_voices" value=""
+                                        placeholder="例: alloy,echo,fable,onyx,nova,shimmer"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
@@ -7127,12 +7130,7 @@
                                         (話者):</label>
                                     <select id="tts_voice"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
-                                        <option value="alloy">alloy</option>
-                                        <option value="echo">echo</option>
-                                        <option value="fable">fable</option>
-                                        <option value="onyx">onyx</option>
-                                        <option value="nova">nova</option>
-                                        <option value="shimmer">shimmer</option>
+                                        <option value="none">none</option>
                                     </select>
                                 </div>
                             </div>
@@ -22402,7 +22400,8 @@
             const availableVoicesInput = document.getElementById('tts_available_voices');
             const voiceSelect = document.getElementById('tts_voice');
 
-            const voices = availableVoicesInput.value.split(',').map(v => v.trim()).filter(v => v !== '');
+            const userVoices = availableVoicesInput.value.split(',').map(v => v.trim()).filter(v => v !== '');
+            const voices = ['none', ...userVoices.filter(v => v !== 'none')];
 
             const currentSelected = voiceSelect.value;
 
@@ -22417,8 +22416,8 @@
 
             if (voices.includes(currentSelected)) {
                 voiceSelect.value = currentSelected;
-            } else if (voices.length > 0) {
-                voiceSelect.value = voices[0];
+            } else {
+                voiceSelect.value = 'none';
             }
 
             localStorage.setItem('tts_available_voices', availableVoicesInput.value);

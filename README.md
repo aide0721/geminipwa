@@ -1,5 +1,5 @@
 # 概要
-- 本リポジトリは[titan823氏のti版GeminiPWA](https://github.com/titan823/geminipwa)をフォークし、TTS(音声読み上げ)機能を追加した私用の派生版です
+- 本リポジトリはtitan823氏のti版GeminiPWA(<https://github.com/titan823/geminipwa>)をフォークし、TTS(音声読み上げ)機能を追加した私用の派生版です
 - 系譜: 本家ona-oni/geminipwa→titan823/geminipwa→本リポジトリ
 - ここではTTS機能に関する説明のみ記しておきますので、経緯やその他の全機能の詳細はフォーク元のREADMEを参照してください
 

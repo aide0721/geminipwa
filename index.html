@@ -22190,8 +22190,8 @@
                 this.audioCtx = null;
                 this.currentSource = null;
                 this.generation = 0;
-                this.maxChunkLength = 150;
-                this.prefetchCount = 2;
+                this.maxChunkLength = 450;
+                this.prefetchCount = 1;
                 this.maxRetries = 2;
                 this.requestTimeoutMs = 120000;
                 this.onActiveChange = null;
@@ -22334,7 +22334,7 @@
                             model: model || 'irodori-tts',
                             input: text,
                             voice: voice || 'none',
-                            response_format: 'wav',
+                            response_format: 'mp3',
                             speed: parseFloat(speed) || 1.0
                         }),
                         signal: controller.signal

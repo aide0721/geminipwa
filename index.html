@@ -7086,7 +7086,7 @@
                                 <label
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold;">読み方辞書:</label>
                                 <textarea id="tts_pronunciation_dict" rows="4"
-                                    placeholder="例:&#10;ジャスティスⅤ=ジャスティスファイブ&#10;身体=からだ,身体検査=しんたいけんさ"
+                                    placeholder="例:&#10;ジャスティスⅤ=ジャスティスファイブ&#10;身体=体,身体検査=身体検査"
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
                                 <p
                                     style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
@@ -7121,7 +7121,7 @@
                                     <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
                                         for="tts_available_voices">利用可能ボイス (カンマ区切り):</label>
                                     <input type="text" id="tts_available_voices" value=""
-                                        placeholder="例: alloy,echo,fable,onyx,nova,shimmer"
+                                        placeholder="alloy,echo,fable,onyx,nova,shimmer"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
@@ -22228,8 +22228,8 @@
 
             _splitText(text) {
                 const sentences = [];
-                // 文末記号(。！？!?)+閉じ括弧、または改行で区切る
-                const re = /[^。．！？!?\n]*[。．！？!?]+[」』）)"'\u201d]*|[^。．！？!?\n]+(?=\n|$)/g;
+                // 文末記号(。！？!?…)+閉じ括弧、または改行で区切る
+                const re = /[^。．！？!?…\n]*[。．！？!?…]+[」』）)"'\u201d]*|[^。．！？!?…\n]+(?=\n|$)/g;
                 let m;
                 while ((m = re.exec(text)) !== null) {
                     const s = m[0].trim();

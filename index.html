@@ -8354,7 +8354,7 @@
         const LIGHT_MODE_HEADER_COLOR = '#4a90e2';
         const LIGHT_MODE_PRIMARY_COLOR = '#ffffff';
 
-        const APP_VERSION = "0.26ti (627)";
+        const APP_VERSION = "0.26ti(tts)";
         const SWIPE_THRESHOLD = 50;
         const ZOOM_THRESHOLD = 1.01;
         const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -22229,11 +22229,23 @@
                 const delimRe = new RegExp(
                     '([。！？!?]+[」』）)"\'\\u201d]*' + SYM + '*|' + SYM + '+|\\s+)', 'u'
                 );
+                const TERM_RE = /[。！？!?][」』）)"'\u201d]*$/u;
+                let merged = '';
+                const flushMerged = () => {
+                    if (merged) { chunks.push(merged); merged = ''; }
+                };
                 for (const para of paragraphs) {
                     if (para.length <= this.maxChunkLength) {
-                        chunks.push(para);
+                        const glue = (merged && !TERM_RE.test(merged)) ? '。' : '';
+                        if (merged && (merged.length + glue.length + para.length) <= this.maxChunkLength) {
+                            merged += glue + para;
+                        } else {
+                            flushMerged();
+                            merged = para;
+                        }
                         continue;
                     }
+                    flushMerged();
                     const raw = para.split(delimRe);
                     const segs = [];
                     for (let i = 0; i < raw.length; i += 2) {
@@ -22259,6 +22271,7 @@
                         if (buf) chunks.push(buf);
                     }
                 }
+                flushMerged();
                 return chunks;
             }
 

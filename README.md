@@ -4,10 +4,10 @@
 - ここではTTS機能に関する説明のみ記しておきますので、経緯やその他の全機能の詳細はフォーク元のREADMEを参照してください
 
 ## ■ 経緯
-元々はどうにか簡単にTTSサーバーを使えないかと思ってノートブックを作っていたのが始まりで、SillyTavernを用意できない人はどうする？と考えた結果、個人的に愛用していたtitan版でのPWA制作を思い立ちました
+元々はどうにか簡単にTTSサーバーを使えないかと思ってノートブックを作っていたのが始まりで、SillyTavernを用意できない人はどうする？と考えた結果、個人的に愛用していたtitan版でのPWA制作に着手しました
 
 ## ■ 利用方法(PWA)
-- 当PWAも例にもれずブラウザから以下のURLにて利用可能です: https://aide0721.github.io/geminipwa/#chat
+- 当PWAも例にもれずこのURLにてブラウザから利用可能です: [Pages PWA(TTS)](hthttps://aide0721.github.io/geminipwa/#chat)
 
 - TTSサーバーはどうすれば？って人はこちらをどうぞ: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aide0721/geminipwa/blob/main/colab.ipynb)
 
@@ -15,6 +15,8 @@
 - エンドポイントURL、モデル、ボイスなどを設定してサーバーに音声リクエストをします
 - 使い方: 音声読み上げ機能にチェックを入れるとチャットにボタンが追加され、それを押すと指定されたボイスで読み上げます
 - 読み方辞書: 想定外の読みをされてしまう文字を、事前に登録しておいた読み方でリクエストする機能です
+
+<img src="TTSconfig.jpeg" width="500" alt="TTS">
 
 # 注意事項
 - 本PWAを初めてのデバイスから使用する場合は、必ず無料モデルを用いて必要最低限の機能構成からテストしてください。

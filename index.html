@@ -7090,8 +7090,8 @@
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
                                 <p
                                     style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
-                                    ※「元の文字=読み方」をカンマまたは改行区切りで複数登録可<br>
-                                    ※元の文字が重複した場合は先に登録した方を優先
+                                    ※ 「元の文字=読み方」をカンマまたは改行区切りで複数登録可<br>
+                                    ※ 元の文字が重複した場合は先に登録した方を優先
                                 </p>
                             </div>
                             <div>
@@ -7110,14 +7110,36 @@
                             </div>
 
                             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                                <div style="flex: 1; min-width: 150px;">
+                                <div style="flex: 2; min-width: 150px;">
                                     <label
                                         style="font-size: 14px; color: var(--text-primary); font-weight: bold;">モデル名:</label>
                                     <input type="text" id="tts_model" value="irodori-tts"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
-                                <div style="flex: 1; min-width: 200px;">
+                                <div style="flex: 1; min-width: 120px;">
+                                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
+                                        for="tts_max_chunk">MAX Chunk:</label>
+                                    <input type="number" id="tts_max_chunk" min="100" max="500" value="300"
+                                        style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                </div>
+
+                                <div style="flex: 1; min-width: 100px;">
+                                    <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
+                                        for="tts_format">音声フォーマット:</label>
+                                    <select id="tts_format"
+                                        style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                        <option value="wav">wav</option>
+                                        <option value="mp3" selected>mp3(推奨)</option>
+                                        <option value="flac">flac</option>
+                                        <option value="opus">opus</option>
+                                        <option value="aac">aac</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <div style="flex: 2; min-width: 200px;">
                                     <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
                                         for="tts_available_voices">利用可能ボイス (カンマ区切り):</label>
                                     <input type="text" id="tts_available_voices" value=""
@@ -22317,7 +22339,7 @@
             }
 
             async _generateAudioData(text) {
-                const { endpoint, apiKey, model, voice, speed } = this.config;
+                const { endpoint, apiKey, model, voice, speed, format } = this.config;
                 if (!endpoint) throw new Error('TTSエンドポイントが未設定です');
                 const controller = new AbortController();
                 this._controllers.add(controller);
@@ -22333,7 +22355,7 @@
                             model: model || 'irodori-tts',
                             input: text,
                             voice: voice || 'none',
-                            response_format: 'mp3',
+                            response_format: format || 'mp3',
                             speed: parseFloat(speed) || 1.0
                         }),
                         signal: controller.signal
@@ -22454,13 +22476,21 @@
             syncTtsSettings();
         }
 
+        function clampTtsChunkLength(raw) {
+            let v = parseInt(raw, 10);
+            if (isNaN(v)) v = 300;
+            return Math.min(500, Math.max(100, v));
+        }
+
         function syncTtsSettings() {
+            window.aiTts.maxChunkLength = clampTtsChunkLength(document.getElementById('tts_max_chunk').value);
             window.aiTts.updateConfig({
                 endpoint: document.getElementById('tts_endpoint').value,
                 apiKey: document.getElementById('tts_key').value,
                 model: document.getElementById('tts_model').value,
                 voice: document.getElementById('tts_voice').value,
-                speed: document.getElementById('tts_speed').value
+                speed: document.getElementById('tts_speed').value,
+                format: document.getElementById('tts_format').value
             });
             document.getElementById('tts_speed_val').innerText = document.getElementById('tts_speed').value;
         }
@@ -22617,7 +22647,16 @@
             { id: 'tts_model', key: 'tts_model', type: 'text' },
             { id: 'tts_voice', key: 'tts_voice', type: 'text' },
             { id: 'tts_speed', key: 'tts_speed', type: 'text' },
+            { id: 'tts_max_chunk', key: 'tts_max_chunk', type: 'text', defaultVal: '300' },
+            { id: 'tts_format', key: 'tts_format', type: 'text', defaultVal: 'mp3' },
         ];
+
+        document.getElementById('tts_max_chunk').addEventListener('change', () => {
+            const el = document.getElementById('tts_max_chunk');
+            el.value = clampTtsChunkLength(el.value);
+            localStorage.setItem('tts_max_chunk', el.value);
+            syncTtsSettings();
+        });
 
         TTS_PERSIST_KEYS.forEach(({ id, key, type, defaultVal }) => {
             const el = document.getElementById(id);

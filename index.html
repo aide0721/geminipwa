@@ -7113,14 +7113,14 @@
                                 <div style="flex: 2; min-width: 150px;">
                                     <label
                                         style="font-size: 14px; color: var(--text-primary); font-weight: bold;">モデル名:</label>
-                                    <input type="text" id="tts_model" value="irodori-tts"
+                                    <input type="text" id="tts_model" value="irodori-tts" placeholder="irodori-tts"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
                                 <div style="flex: 1; min-width: 120px;">
                                     <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
                                         for="tts_max_chunk">MAX Chunk:</label>
-                                    <input type="number" id="tts_max_chunk" min="100" max="500" value="300"
+                                    <input type="number" id="tts_max_chunk" min="100" max="500" value="300" placeholder="100～500"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
@@ -22198,7 +22198,7 @@
                 this.audioCtx = null;
                 this.currentSource = null;
                 this.generation = 0;
-                this.maxChunkLength = 450;
+                this.maxChunkLength = 300;
                 this.prefetchCount = 1;
                 this.maxRetries = 2;
                 this.requestTimeoutMs = 120000;
@@ -22647,7 +22647,7 @@
             { id: 'tts_model', key: 'tts_model', type: 'text' },
             { id: 'tts_voice', key: 'tts_voice', type: 'text' },
             { id: 'tts_speed', key: 'tts_speed', type: 'text' },
-            { id: 'tts_max_chunk', key: 'tts_max_chunk', type: 'text', defaultVal: '300' },
+            { id: 'tts_max_chunk', key: 'tts_max_chunk', type: 'text' },
             { id: 'tts_format', key: 'tts_format', type: 'text', defaultVal: 'mp3' },
         ];
 
@@ -22656,6 +22656,15 @@
             el.value = clampTtsChunkLength(el.value);
             localStorage.setItem('tts_max_chunk', el.value);
             syncTtsSettings();
+        });
+
+        document.getElementById('tts_model').addEventListener('change', () => {
+            const el = document.getElementById('tts_model');
+            if (el.value.trim() === '') {
+                el.value = 'irodori-tts';
+                localStorage.setItem('tts_model', el.value);
+                syncTtsSettings();
+            }
         });
 
         TTS_PERSIST_KEYS.forEach(({ id, key, type, defaultVal }) => {

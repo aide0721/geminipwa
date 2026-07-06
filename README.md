@@ -7,14 +7,14 @@
 元々はどうにか簡単にTTSサーバーを使えないかと思ってノートブックを作っていたのが始まりで、SillyTavernを用意できない人はどうする？と考えた結果、個人的に愛用していたtitan版でのPWA制作に着手しました
 
 ## ■ 利用方法(PWA)
-- 当PWAも例にもれずこのURLにてブラウザから利用可能です: [Pages PWA(TTS)](https://aide0721.github.io/geminipwa/#chat)
+- 当PWAも例にもれずブラウザからこのURLにて利用可能です: [Pages PWA(TTS)](https://aide0721.github.io/geminipwa/#chat)
 
-- TTSサーバーはどうすれば？って人はこちらをどうぞ: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aide0721/geminipwa/blob/main/colab.ipynb)
+- TTSサーバーはどうすれば？という人はこちら: [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/aide0721/geminipwa/blob/main/colab.ipynb)
 
 # 追加機能: TTS
 - エンドポイントURL、モデル、ボイスなどを設定してサーバーに音声リクエストをします
 - 使い方: 音声読み上げ機能にチェックを入れるとチャットにボタンが追加され、それを押すと指定されたボイスで読み上げます
-- MAX Chunk: 音声リクエストが長すぎてエラーになっている場合は、この数値を下げると分割リクエストするので改善されることがあります(上げると生成時間が長くなる)
+- MAX Chunk: 音声リクエストが長すぎてエラーになっている場合は、この数値を下げるほどリクエストが分割されるのでエラーが出にくくなります(上げると生成にかかる時間も伸びる)
 - 音声フォーマット: 出力される音声形式を指定できますが、ブラウザによっては再生できないフォーマットがあるのでmp3が一番無難です
 - 読み方辞書: 想定外の読みをされてしまう文字を、事前に登録しておいた読み方でリクエストする機能です
 

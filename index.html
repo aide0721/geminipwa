@@ -5374,20 +5374,19 @@
                         </details>
                         <label for="gemini-model-name">モデル名:</label>
                         <select id="gemini-model-name" aria-label="モデル名">
-                            <optgroup label="無料">
-                                <option value="gemini-2.0-flash">gemini-2.0-flash</option <option
-                                    value="gemini-2.5-flash">gemini-2.5-flash</option>
-                                <option value="gemini-flash-latest">gemini-flash-latest</option>
-                            </optgroup>
-                            <optgroup label="有料">
-                                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-                                <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
-                                <option value="gemini-3-pro-preview">gemini-3-pro-preview</option>
-                                <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
-                            </optgroup>
+                            <option value="gemini-flash-latest">gemini-flash-latest</option>
+                            <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+                            <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
+                            <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview</option>
+                            <option value="gemini-3-flash-preview">gemini-3-flash-preview</option>
+                            <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                            <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
                             <optgroup label="ユーザー指定" id="gemini-user-defined-models-group">
                             </optgroup>
                         </select>
+                        <button type="button" id="fetch-gemini-models-btn" class="add-api-key-btn"
+                            style="width: auto; padding: 8px 15px; margin-top: 5px;">モデル一覧をAPIから更新</button>
                         <details style="margin-top: 10px;">
                             <summary
                                 style="font-size: 14px; color: var(--text-link); cursor: pointer; list-style: revert;">
@@ -5501,37 +5500,24 @@
                                 </label>
                             </div>
                         </details>
+                        <label for="claude-api-endpoint" style="margin-top: 10px;">API エンドポイントURL (任意):</label>
+                        <input type="text" id="claude-api-endpoint"
+                            placeholder="例: https://proxy.example.com/v1/messages (空欄でデフォルト)" aria-label="Claude API エンドポイント">
                         <label for="claude-model-name">モデル名:</label>
                         <select id="claude-model-name" aria-label="Claudeモデル名">
-                            <optgroup label="Claude 4 ∼ 4.6">
-                                <option value="claude-opus-4-6">Claude Opus 4.6</option>
-                                <option value="claude-opus-4-5-20251101">Claude Opus 4.5</option>
-                                <option value="claude-opus-4-1-20250805">Claude Opus 4.1</option>
-                                <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-                                <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
-                                <option value="claude-opus-4-20250514">Claude 4 Opus</option>
-                                <option value="claude-sonnet-4-20250514">Claude 4 Sonnet</option>
-                            </optgroup>
-                            <optgroup label="Claude 3 ∼ 3.7">
-                                <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
-                                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet v2</option>
-                                <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet v1</option>
-                                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
-                                <option value="claude-3-opus-20240229">Claude 3 Opus</option>
-                                <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
-                                <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
-                            </optgroup>
-                            <optgroup label="エイリアス (最新版を指す)">
-                                <option value="claude-opus-4-5">claude-opus-4-5</option>
-                                <option value="claude-opus-4-0">claude-opus-4-0</option>
-                                <option value="claude-sonnet-4-0">claude-sonnet-4-0</option>
-                                <option value="claude-3-7-sonnet-latest">claude-3-7-sonnet-latest</option>
-                                <option value="claude-3-5-sonnet-latest">claude-3-5-sonnet-latest</option>
-                                <option value="claude-3-opus-latest">claude-3-opus-latest</option>
-                            </optgroup>
+                            <option value="claude-opus-4-8">Claude Opus 4.8</option>
+                            <option value="claude-sonnet-5">Claude Sonnet 5</option>
+                            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+                            <option value="claude-fable-5">Claude Fable 5</option>
+                            <option value="claude-opus-4-7">Claude Opus 4.7</option>
+                            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+                            <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+                            <option value="claude-sonnet-4-5-20250929">Claude Sonnet 4.5</option>
                             <optgroup label="ユーザー指定" id="claude-user-defined-models-group">
                             </optgroup>
                         </select>
+                        <button type="button" id="fetch-claude-models-btn" class="add-api-key-btn"
+                            style="width: auto; padding: 8px 15px; margin-top: 5px;">モデル一覧をAPIから更新</button>
                         <details style="margin-top: 10px;">
                             <summary
                                 style="font-size: 14px; color: var(--text-link); cursor: pointer; list-style: revert;">
@@ -8453,6 +8439,7 @@
             geminiModelNameSelect: document.getElementById('gemini-model-name'),
             geminiUserDefinedModelsGroup: document.getElementById('gemini-user-defined-models-group'),
             geminiAdditionalModelsTextarea: document.getElementById('gemini-additional-models'),
+            fetchGeminiModelsBtn: document.getElementById('fetch-gemini-models-btn'),
             deepSeekSettingsGroup: document.getElementById('deepseek-settings-group'),
             deepSeekApiKeyInput: document.getElementById('deepseek-api-key'),
             deepSeekApiEndpointInput: document.getElementById('deepseek-api-endpoint'),
@@ -8461,9 +8448,11 @@
             deepSeekAdditionalModelsTextarea: document.getElementById('deepseek-additional-models'),
             claudeSettingsGroup: document.getElementById('claude-settings-group'),
             claudeApiKeyInput: document.getElementById('claude-api-key'),
+            claudeApiEndpointInput: document.getElementById('claude-api-endpoint'),
             claudeModelNameSelect: document.getElementById('claude-model-name'),
             claudeUserDefinedModelsGroup: document.getElementById('claude-user-defined-models-group'),
             claudeAdditionalModelsTextarea: document.getElementById('claude-additional-models'),
+            fetchClaudeModelsBtn: document.getElementById('fetch-claude-models-btn'),
             openaiSettingsGroup: document.getElementById('openai-settings-group'),
             openaiApiKeyInput: document.getElementById('openai-api-key'),
             openaiModelNameSelect: document.getElementById('openai-model-name'),
@@ -8950,6 +8939,7 @@
                 deepSeekEnableDummyModel: true,
                 deepSeekConcatDummyModel: false,
                 claudeApiKey: '',
+                claudeApiEndpoint: '',
                 claudeModelName: DEFAULT_CLAUDE_MODEL,
                 claudeAdditionalModels: '',
                 claudeSystemPrompt: '',
@@ -11590,6 +11580,7 @@
                 elements.deepSeekModelNameSelect.value = state.settings.deepSeekModelName || DEFAULT_DEEPSEEK_MODEL;
                 elements.deepSeekAdditionalModelsTextarea.value = state.settings.deepSeekAdditionalModels || '';
                 elements.claudeApiKeyInput.value = state.settings.claudeApiKey || '';
+                elements.claudeApiEndpointInput.value = state.settings.claudeApiEndpoint || '';
                 elements.claudeModelNameSelect.value = state.settings.claudeModelName || DEFAULT_CLAUDE_MODEL;
                 elements.claudeAdditionalModelsTextarea.value = state.settings.claudeAdditionalModels || '';
                 elements.openaiApiKeyInput.value = state.settings.openaiApiKey || '';
@@ -11967,6 +11958,8 @@
                 }
                 this.updateChatScreenElementVisibility();
                 this.updateHistoryHeaderButtonVisibility();
+                this.applyFetchedModelList('gemini');
+                this.applyFetchedModelList('claude');
                 this.updateUserModelOptions();
                 this.updateDeepSeekUserModelOptions();
                 this.updateClaudeUserModelOptions();
@@ -12358,6 +12351,55 @@
                     }
                 } else {
                     group.disabled = true;
+                }
+            },
+            applyFetchedModelList(provider) {
+                let models = null;
+                try {
+                    models = JSON.parse(localStorage.getItem(`fetchedModelList_${provider}`));
+                } catch (e) { }
+                if (!Array.isArray(models) || models.length === 0) return;
+                this.rebuildModelSelectOptions(provider, models);
+            },
+            rebuildModelSelectOptions(provider, models) {
+                const isGemini = provider === 'gemini';
+                const select = isGemini ? elements.geminiModelNameSelect : elements.claudeModelNameSelect;
+                const userGroup = isGemini ? elements.geminiUserDefinedModelsGroup : elements.claudeUserDefinedModelsGroup;
+                Array.from(select.children).forEach(child => {
+                    if (child !== userGroup) child.remove();
+                });
+                models.forEach(m => {
+                    if (!m || !m.id) return;
+                    const option = document.createElement('option');
+                    option.value = m.id;
+                    option.textContent = m.label || m.id;
+                    select.insertBefore(option, userGroup);
+                });
+                const savedModel = isGemini ? state.settings.modelName : state.settings.claudeModelName;
+                if (savedModel) {
+                    if (!Array.from(select.options).some(opt => opt.value === savedModel)) {
+                        const fallbackOption = document.createElement('option');
+                        fallbackOption.value = savedModel;
+                        fallbackOption.textContent = savedModel;
+                        select.insertBefore(fallbackOption, userGroup);
+                    }
+                    select.value = savedModel;
+                }
+            },
+            async refreshModelListFromApi(provider) {
+                const btn = provider === 'gemini' ? elements.fetchGeminiModelsBtn : elements.fetchClaudeModelsBtn;
+                try {
+                    if (btn) { btn.disabled = true; btn.textContent = '取得中...'; }
+                    const models = provider === 'gemini'
+                        ? await apiUtils.fetchGeminiModelList()
+                        : await apiUtils.fetchClaudeModelList();
+                    localStorage.setItem(`fetchedModelList_${provider}`, JSON.stringify(models));
+                    this.rebuildModelSelectOptions(provider, models);
+                    await this.showCustomAlert(`モデル一覧を更新しました (${models.length}件)。`);
+                } catch (error) {
+                    await this.showCustomAlert(`モデル一覧の取得に失敗しました: ${error.message}`);
+                } finally {
+                    if (btn) { btn.disabled = false; btn.textContent = 'モデル一覧をAPIから更新'; }
                 }
             },
             updateOpenAIUserModelOptions() {
@@ -14623,6 +14665,8 @@
                 elements.geminiApiKeyInput.addEventListener('input', () => multiApiKeyUtils.syncMainApiKeyInput('gemini'));
                 elements.deepSeekApiKeyInput.addEventListener('input', () => multiApiKeyUtils.syncMainApiKeyInput('deepseek'));
                 elements.claudeApiKeyInput.addEventListener('input', () => multiApiKeyUtils.syncMainApiKeyInput('claude'));
+                if (elements.fetchGeminiModelsBtn) elements.fetchGeminiModelsBtn.addEventListener('click', () => uiUtils.refreshModelListFromApi('gemini'));
+                if (elements.fetchClaudeModelsBtn) elements.fetchClaudeModelsBtn.addEventListener('click', () => uiUtils.refreshModelListFromApi('claude'));
                 elements.openaiApiKeyInput.addEventListener('input', () => multiApiKeyUtils.syncMainApiKeyInput('openai'));
                 elements.xaiApiKeyInput.addEventListener('input', () => multiApiKeyUtils.syncMainApiKeyInput('xai'));
                 elements.llmAggregatorApiKeyInput.addEventListener('input', () => multiApiKeyUtils.syncMainApiKeyInput('llmaggregator'));
@@ -17573,6 +17617,7 @@
                 newSettings.deepSeekEnableDummyModel = elements.deepSeekEnableDummyModelCheckbox.checked;
                 newSettings.deepSeekConcatDummyModel = elements.deepSeekConcatDummyModelCheckbox.checked;
 
+                newSettings.claudeApiEndpoint = elements.claudeApiEndpointInput.value.trim();
                 newSettings.claudeModelName = elements.claudeModelNameSelect.value;
                 newSettings.claudeAdditionalModels = elements.claudeAdditionalModelsTextarea.value.trim();
                 newSettings.claudeSystemPrompt = elements.claudeSystemPromptDefaultTextarea.value.trim();
@@ -20249,7 +20294,7 @@
                 if (trackAbort) state.abortController = abortController;
                 const { signal } = abortController;
 
-                const baseUrl = CLAUDE_API_BASE_URL;
+                const baseUrl = state.settings.claudeApiEndpoint || CLAUDE_API_BASE_URL;
 
                 const anthropicRequest = this.convertToClaudeRequest(messagesForApi, systemInstruction);
 
@@ -20259,7 +20304,12 @@
                     stream: useStreaming,
                     max_tokens: generationConfig.maxOutputTokens || state.settings.claudeMaxTokens || DEFAULT_CLAUDE_MAX_TOKENS
                 };
-                if (anthropicRequest.system) requestBody.system = anthropicRequest.system;
+                if (anthropicRequest.system) {
+                    // リバースプロキシ使用時はブロック配列形式で送る
+                    requestBody.system = state.settings.claudeApiEndpoint
+                        ? [{ type: 'text', text: anthropicRequest.system }]
+                        : anthropicRequest.system;
+                }
                 let tempValue = (generationConfig.temperature !== undefined && generationConfig.temperature !== null)
                     ? generationConfig.temperature
                     : state.settings.claudeTemperature;
@@ -20320,6 +20370,70 @@
                     }
                     throw error;
                 }
+            },
+            async fetchGeminiModelList() {
+                const apiKey = elements.geminiApiKeyInput.value.trim() || state.settings.apiKey;
+                if (!apiKey) {
+                    throw new Error("Gemini APIキーが設定されていません。");
+                }
+                const url = `${GEMINI_API_BASE_URL.replace(/\/$/, '')}?pageSize=1000&key=${encodeURIComponent(apiKey)}`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    let errorMsg = `Gemini APIエラー (${response.status})`;
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.error && errorData.error.message) errorMsg += `: ${errorData.error.message}`;
+                    } catch (e) { }
+                    throw new Error(errorMsg);
+                }
+                const data = await response.json();
+                const models = (data.models || [])
+                    .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+                    .map(m => {
+                        const id = (m.name || '').replace(/^models\//, '');
+                        return { id: id, label: id };
+                    })
+                    .filter(m => m.id);
+                if (models.length === 0) {
+                    throw new Error("利用可能なモデルが見つかりませんでした。");
+                }
+                return models;
+            },
+            async fetchClaudeModelList() {
+                const apiKey = elements.claudeApiKeyInput.value.trim() || state.settings.claudeApiKey;
+                if (!apiKey) {
+                    throw new Error("Claude APIキーが設定されていません。");
+                }
+                const baseUrl = state.settings.claudeApiEndpoint || CLAUDE_API_BASE_URL;
+                const modelsUrl = baseUrl.includes('/v1/messages')
+                    ? baseUrl.replace('/v1/messages', '/v1/models')
+                    : 'https://api.anthropic.com/v1/models';
+                const response = await fetch(`${modelsUrl}${modelsUrl.includes('?') ? '&' : '?'}limit=1000`, {
+                    headers: {
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'anthropic-dangerous-direct-browser-access': 'true'
+                    }
+                });
+                if (!response.ok) {
+                    let errorMsg = `Claude APIエラー (${response.status})`;
+                    try {
+                        const errorData = await response.json();
+                        if (errorData.error && errorData.error.message) errorMsg += `: ${errorData.error.message}`;
+                    } catch (e) { }
+                    throw new Error(errorMsg);
+                }
+                const data = await response.json();
+                const models = (data.data || [])
+                    .filter(m => m && m.id)
+                    .map(m => ({
+                        id: m.id,
+                        label: (m.display_name && m.display_name !== m.id) ? `${m.display_name} (${m.id})` : m.id
+                    }));
+                if (models.length === 0) {
+                    throw new Error("利用可能なモデルが見つかりませんでした。");
+                }
+                return models;
             },
             convertToClaudeRequest(messagesForApi, systemInstruction) {
                 const claudeMessages = [];

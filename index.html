@@ -5502,7 +5502,8 @@
                         </details>
                         <label for="claude-api-endpoint" style="margin-top: 10px;">API エンドポイントURL (任意):</label>
                         <input type="text" id="claude-api-endpoint"
-                            placeholder="例: https://proxy.example.com/v1/messages (空欄でデフォルト)" aria-label="Claude API エンドポイント">
+                            placeholder="例: https://proxy.example.com/v1/messages (空欄でデフォルト)"
+                            aria-label="Claude API エンドポイント">
                         <label for="claude-model-name">モデル名:</label>
                         <select id="claude-model-name" aria-label="Claudeモデル名">
                             <option value="claude-opus-4-8">Claude Opus 4.8</option>
@@ -7072,12 +7073,12 @@
                                 <label
                                     style="font-size: 14px; color: var(--text-primary); font-weight: bold;">読み方辞書:</label>
                                 <textarea id="tts_pronunciation_dict" rows="4"
-                                    placeholder="例:&#10;ジャスティスⅤ=ジャスティスファイブ&#10;身体=体,身体検査=身体検査"
+                                    placeholder="例: ジャスティスⅤ=ジャスティスファイブ&#10;身体=体,身体検査=身体検査"
                                     style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
                                 <p
                                     style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
-                                    ※ 「元の文字=読み方」をカンマまたは改行区切りで複数登録可<br>
-                                    ※ 元の文字が重複した場合は先に登録した方を優先
+                                    ※ "元の文字=読み方"をカンマまたは改行区切りで複数登録が可能です。<br>
+                                    ※ 同じ語を複数登録した場合は先に登録した方を優先します。
                                 </p>
                             </div>
                             <div>
@@ -7106,7 +7107,8 @@
                                 <div style="flex: 1; min-width: 120px;">
                                     <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
                                         for="tts_max_chunk">MAX Chunk:</label>
-                                    <input type="number" id="tts_max_chunk" min="100" max="500" value="300" placeholder="100～500"
+                                    <input type="number" id="tts_max_chunk" min="100" max="500" value="300"
+                                        placeholder="100～500"
                                         style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
                                 </div>
 
@@ -7151,6 +7153,110 @@
                                         style="flex: 1; cursor: pointer;">
                                 </div>
                             </div>
+
+                            <details id="tts-irodori-details"
+                                style="border: 1px solid var(--border-secondary); border-radius: 4px; padding: 8px;">
+                                <summary
+                                    style="font-size: 14px; color: var(--text-link); cursor: pointer; font-weight: bold;">
+                                    Irodori-TTS専用設定 (モデル名irodori-ttsで有効)</summary>
+                                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                                    <div>
+                                        <label style="font-size: 14px; color: var(--text-primary); font-weight: bold;"
+                                            for="tts_caption">キャプション:</label>
+                                        <textarea id="tts_caption" rows="3"
+                                            placeholder="例: 若く元気な女性の声。明るくハキハキとした少し高めのトーンで話している。"
+                                            style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary); resize: vertical; font-family: inherit;"></textarea>
+                                        <p
+                                            style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
+                                            ※ VoiceDesignモデル専用パラメータなので他のモデルでは無視されます。
+                                        </p>
+                                    </div>
+
+                                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                        <div style="flex: 1; min-width: 110px;">
+                                            <label
+                                                style="font-size: 13px; color: var(--text-primary); font-weight: bold;"
+                                                for="tts_num_steps">Steps:</label>
+                                            <input type="number" id="tts_num_steps" min="1" max="200" step="1"
+                                                placeholder="規定値: 40"
+                                                style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                        </div>
+                                        <div style="flex: 1; min-width: 110px;">
+                                            <label
+                                                style="font-size: 13px; color: var(--text-primary); font-weight: bold;"
+                                                for="tts_seed">Seed:</label>
+                                            <input type="number" id="tts_seed" step="1" placeholder="空欄はランダム"
+                                                style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                        <div style="flex: 1; min-width: 110px;">
+                                            <label
+                                                style="font-size: 13px; color: var(--text-primary); font-weight: bold;"
+                                                for="tts_cfg_scale_text">CFG Text:</label>
+                                            <input type="number" id="tts_cfg_scale_text" min="0" max="20" step="0.1"
+                                                placeholder="規定値: 3.0"
+                                                style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                        </div>
+                                        <div style="flex: 1; min-width: 110px;">
+                                            <label
+                                                style="font-size: 13px; color: var(--text-primary); font-weight: bold;"
+                                                for="tts_cfg_scale_caption">CFG Caption:</label>
+                                            <input type="number" id="tts_cfg_scale_caption" min="0" max="20" step="0.1"
+                                                placeholder="規定値: 3.0"
+                                                style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                        </div>
+                                        <div style="flex: 1; min-width: 110px;">
+                                            <label
+                                                style="font-size: 13px; color: var(--text-primary); font-weight: bold;"
+                                                for="tts_cfg_scale_speaker">CFG Speaker:</label>
+                                            <input type="number" id="tts_cfg_scale_speaker" min="0" max="20" step="0.1"
+                                                placeholder="規定値: 5.0"
+                                                style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                        </div>
+                                    </div>
+
+                                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                        <div style="flex: 1; min-width: 150px;">
+                                            <label
+                                                style="font-size: 13px; color: var(--text-primary); font-weight: bold;"
+                                                for="tts_t_schedule_mode">Schedule:</label>
+                                            <select id="tts_t_schedule_mode"
+                                                style="width: 100%; box-sizing: border-box; padding: 6px 8px; font-size: 13px; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); color: var(--text-primary);">
+                                                <option value="linear" selected>linear(既定値)</option>
+                                                <option value="sway">sway(低Steps向け)</option>
+                                            </select>
+                                        </div>
+                                        <div style="flex: 1; min-width: 150px;">
+                                            <label
+                                                style="font-size: 13px; color: var(--text-primary); font-weight: bold;"
+                                                for="tts_sway_coeff">Sway係数: <span id="tts_sway_coeff_val"
+                                                    style="font-weight: normal;">-1.0</span></label>
+                                            <div style="display: flex; align-items: center; margin-top: 5px;">
+                                                <input type="range" id="tts_sway_coeff" min="-2" max="0" step="0.1"
+                                                    value="-1" style="flex: 1; cursor: pointer;">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label
+                                            style="font-size: 13px; color: var(--text-primary); font-weight: bold;">Seedログ
+                                            (直近20件):</label>
+                                        <div id="tts_seed_log"
+                                            style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border-primary); border-radius: 3px; background-color: var(--bg-input); font-size: 12px; margin-top: 4px;">
+                                        </div>
+                                        <button type="button" id="tts_seed_log_clear"
+                                            style="width: auto; padding: 6px 9px; margin-top: 5px; margin-left: 8px; font-size: 11px;">クリア</button>
+                                    </div>
+                                    <p
+                                        style="font-size: 11px; color: var(--text-secondary); margin-top: 0; margin-bottom: 0;">
+                                        ※ ログをタップすると該当するSeed値が入力されます。<br>
+                                        ※ 空欄の項目はリクエストに含まれずサーバー側で設定してある規定値になります。
+                                    </p>
+                                </div>
+                            </details>
                         </div>
                     </details>
                 </div>
@@ -12616,6 +12722,7 @@
                 const wasSending = state.isSending;
                 state.isSending = sending;
                 if (sending) {
+                    if (!wasSending) ttsAutoSpokenIndices.clear();
                     elements.sendButton.textContent = '止';
                     elements.sendButton.classList.add('sending');
                     elements.sendButton.title = "停止";
@@ -15349,6 +15456,8 @@
             startNewChat() {
                 state.currentChatId = null;
                 state.currentMessages = [];
+                ttsAutoSpokenIndices.clear();
+                window.aiTts.stop();
                 state.currentChatBaseUrl = null;
                 if (state.settings.commonSystemPrompt && state.settings.commonSystemPrompt.trim() !== '') {
                 }
@@ -15425,6 +15534,8 @@
                             }
                         });
 
+                        ttsAutoSpokenIndices.clear();
+                        window.aiTts.stop();
                         state.pendingAttachments = [];
                         state.areAllMessagesHidden = false;
                         uiUtils.updateToggleAllContentButton();
@@ -18318,7 +18429,7 @@
 
                 window.aiTts.stop();
                 ttsSetActiveButton(buttonElement || null);
-                window.aiTts.speak(textToSpeak);
+                window.aiTts.speak(textToSpeak, index);
             },
             async deleteMessage(index) {
                 await this.commitAllOpenEdits();
@@ -22319,6 +22430,10 @@
                 this.onActiveChange = null;
                 this._active = false;
                 this._controllers = new Set();
+                this.currentTag = null;
+                this.onTagChange = null;
+                this.onError = null;
+                this._consecutiveFailures = 0;
             }
 
             _setActive(v) {
@@ -22354,6 +22469,7 @@
                     this.currentSource = null;
                 }
                 this.queue = [];
+                this.currentTag = null;
                 this.isPlaying = false;
                 this._setActive(false);
             }
@@ -22411,13 +22527,26 @@
                 return chunks;
             }
 
-            speak(text) {
+            speak(text, tag = null) {
                 if (!text) return;
                 this.isStopped = false;
+                this._consecutiveFailures = 0;
                 this._setActive(true);
                 const gen = this.generation;
                 for (const chunk of this._splitText(text)) {
-                    this.queue.push({ text: chunk, promise: null, gen });
+                    this.queue.push({ text: chunk, promise: null, gen, tag });
+                }
+                this._prefetch();
+                this._processQueue();
+            }
+
+            speakOrQueue(text, tag = null) {
+                if (!text) return;
+                if (!this._active) { this.speak(text, tag); return; }
+                this.queue = this.queue.filter(it => it.tag === this.currentTag);
+                const gen = this.generation;
+                for (const chunk of this._splitText(text)) {
+                    this.queue.push({ text: chunk, promise: null, gen, tag });
                 }
                 this._prefetch();
                 this._processQueue();
@@ -22452,32 +22581,62 @@
                 throw lastError;
             }
 
+            _buildIrodoriOptions() {
+                const { model, caption, numSteps, seed, cfgScaleText, cfgScaleCaption, cfgScaleSpeaker, tScheduleMode, swayCoeff } = this.config;
+                const irodori = {};
+                if (String(model || '').trim() !== 'irodori-tts') return irodori;
+                const addNum = (key, raw, parser) => {
+                    if (raw === undefined || raw === null || String(raw).trim() === '') return;
+                    const v = parser(raw);
+                    if (!Number.isNaN(v)) irodori[key] = v;
+                };
+                if (caption && caption.trim() !== '') irodori.caption = caption.trim();
+                addNum('num_steps', numSteps, v => parseInt(v, 10));
+                addNum('seed', seed, v => parseInt(v, 10));
+                addNum('cfg_scale_text', cfgScaleText, parseFloat);
+                addNum('cfg_scale_caption', cfgScaleCaption, parseFloat);
+                addNum('cfg_scale_speaker', cfgScaleSpeaker, parseFloat);
+                if ((tScheduleMode || '').trim() === 'sway') {
+                    irodori.t_schedule_mode = 'sway';
+                    addNum('sway_coeff', swayCoeff, parseFloat);
+                }
+                return irodori;
+            }
+
             async _generateAudioData(text) {
+                window._ttsSeedLogSeq = (window._ttsSeedLogSeq || 0) + 1;
+                const seedLogSeq = window._ttsSeedLogSeq;
                 const { endpoint, apiKey, model, voice, speed, format } = this.config;
                 if (!endpoint) throw new Error('TTSエンドポイントが未設定です');
                 const controller = new AbortController();
                 this._controllers.add(controller);
                 const timeoutId = setTimeout(() => controller.abort(), this.requestTimeoutMs);
                 try {
+                    const requestBody = {
+                        model: model || 'irodori-tts',
+                        input: text,
+                        voice: voice || 'none',
+                        response_format: format || 'mp3',
+                        speed: parseFloat(speed) || 1.0
+                    };
+                    const irodori = this._buildIrodoriOptions();
+                    if (Object.keys(irodori).length > 0) {
+                        requestBody.irodori = irodori;
+                    }
                     const response = await fetch(endpoint, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             ...(apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {})
                         },
-                        body: JSON.stringify({
-                            model: model || 'irodori-tts',
-                            input: text,
-                            voice: voice || 'none',
-                            response_format: format || 'mp3',
-                            speed: parseFloat(speed) || 1.0
-                        }),
+                        body: JSON.stringify(requestBody),
                         signal: controller.signal
                     });
                     if (!response.ok) {
                         const errBody = await response.text().catch(() => '');
                         throw new Error(`TTS APIエラー: ${response.status} ${errBody.slice(0, 200)}`);
                     }
+                    if (typeof window.recordTtsSeedLog === 'function') window.recordTtsSeedLog(text, response.headers.get('X-Irodori-Seed'), seedLogSeq);
                     const arrayBuffer = await response.arrayBuffer();
                     const expected = parseInt(response.headers.get('content-length') || '0', 10);
                     if (expected > 0 && arrayBuffer.byteLength < expected) {
@@ -22486,7 +22645,11 @@
                     if (arrayBuffer.byteLength === 0) {
                         throw new Error('空のレスポンスを受信しました');
                     }
-                    return arrayBuffer;
+                    try {
+                        return await this._ensureCtx().decodeAudioData(arrayBuffer);
+                    } catch (e) {
+                        throw new Error(`decodeAudioData失敗: ${e.name || ''} ${e.message || ''}`);
+                    }
                 } finally {
                     clearTimeout(timeoutId);
                     this._controllers.delete(controller);
@@ -22495,23 +22658,30 @@
 
             async _processQueue() {
                 if (this.isPlaying) return;
-                if (this.queue.length === 0) { this._setActive(false); return; }
+                if (this.queue.length === 0) {
+                    this.currentTag = null;
+                    this._setActive(false);
+                    return;
+                }
                 this.isPlaying = true;
                 const item = this.queue.shift();
+                if (item.tag !== this.currentTag) {
+                    this.currentTag = item.tag;
+                    if (typeof this.onTagChange === 'function') {
+                        try { this.onTagChange(item.tag); } catch (e) { }
+                    }
+                }
                 const gen = this.generation;
                 this._prefetch();
                 try {
                     if (!item.promise) {
                         item.promise = this._generateWithRetry(item.text);
                     }
-                    const arrayBuffer = await item.promise;
+                    const audioBuffer = await item.promise;
                     if (this.isStopped || gen !== this.generation) { this.isPlaying = false; return; }
 
                     const ctx = this._ensureCtx();
                     if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) { } }
-
-                    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-                    if (this.isStopped || gen !== this.generation) { this.isPlaying = false; return; }
 
                     const source = ctx.createBufferSource();
                     source.buffer = audioBuffer;
@@ -22523,9 +22693,22 @@
                         this._processQueue();
                     };
                     source.start(0);
+                    this._consecutiveFailures = 0;
                 } catch (error) {
                     if (!this.isStopped) {
-                        console.error('TTS再生エラー(このチャンクをスキップします):', error);
+                        console.error('TTS再生エラー:', error);
+                        this._consecutiveFailures++;
+                        if (this._consecutiveFailures >= 2) {
+                            this._consecutiveFailures = 0;
+                            this.stop();
+                            if (typeof this.onError === 'function') {
+                                try { this.onError(`連続した失敗により停止: ${error.message}`); } catch (e) { }
+                            }
+                            return;
+                        }
+                        if (typeof this.onError === 'function') {
+                            try { this.onError(`チャンクをスキップ: ${error.message}`); } catch (e) { }
+                        }
                     }
                     this.isPlaying = false;
                     this._processQueue();
@@ -22543,6 +22726,42 @@
             }
             ttsActiveButton = btn;
         }
+
+        window.aiTts.onTagChange = (tag) => {
+            if (typeof tag !== 'number') return;
+            const msgEl = elements.messageContainer.querySelector(`.message[data-index="${tag}"]`);
+            const btn = msgEl ? msgEl.querySelector('.js-tts-btn') : null;
+            if (btn) {
+                ttsSetActiveButton(btn);
+                btn.textContent = '⏹️';
+                btn.classList.add('tts-speaking');
+            } else {
+                ttsSetActiveButton(null);
+            }
+        };
+
+        function showTtsToast(message) {
+            let toast = document.getElementById('tts-error-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'tts-error-toast';
+                toast.style.cssText =
+                    'position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);' +
+                    'background: var(--bg-error-message); color: var(--text-primary);' +
+                    'border: 1px solid var(--bg-button-delete); border-radius: 8px;' +
+                    'padding: 10px 16px; font-size: 13px; z-index: 9999;' +
+                    'box-shadow: 0 2px 8px rgba(0,0,0,0.2); max-width: 80vw; word-break: break-all;' +
+                    'opacity: 0; transition: opacity 0.3s; pointer-events: none;';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = '🔇 ' + message;
+            clearTimeout(toast._hideTimer);
+            requestAnimationFrame(() => { toast.style.opacity = '1'; });
+            toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 6000);
+        }
+
+        window.aiTts.onError = showTtsToast;
+
         window.aiTts.onActiveChange = (isActive) => {
             if (!ttsActiveButton) return;
             if (isActive) {
@@ -22596,6 +22815,66 @@
             return Math.min(500, Math.max(100, v));
         }
 
+        function updateIrodoriSectionState() {
+            const isIrodori = document.getElementById('tts_model').value.trim() === 'irodori-tts';
+            const details = document.getElementById('tts-irodori-details');
+            if (!details) return;
+            details.style.opacity = isIrodori ? '' : '0.5';
+            details.querySelectorAll('input, textarea, select').forEach(el => {
+                el.disabled = !isIrodori;
+            });
+            const swayEl = document.getElementById('tts_sway_coeff');
+            const isSway = document.getElementById('tts_t_schedule_mode').value === 'sway';
+            swayEl.disabled = !isIrodori || !isSway;
+            swayEl.style.opacity = swayEl.disabled ? '0.5' : '';
+        }
+
+        const TTS_SEED_LOG_KEY = 'tts_seed_log';
+
+        window.recordTtsSeedLog = function (text, seed, seq) {
+            if (!seed) return;
+            let log;
+            try { log = JSON.parse(localStorage.getItem(TTS_SEED_LOG_KEY)) || []; } catch (e) { log = []; }
+            log.push({ seed: String(seed), text: String(text).slice(0, 50), seq: seq || 0 });
+            log.sort((a, b) => (b.seq || 0) - (a.seq || 0));
+            if (log.length > 20) log.length = 20;
+            localStorage.setItem(TTS_SEED_LOG_KEY, JSON.stringify(log));
+            renderTtsSeedLog();
+        };
+
+        function renderTtsSeedLog() {
+            const container = document.getElementById('tts_seed_log');
+            if (!container) return;
+            let log;
+            try { log = JSON.parse(localStorage.getItem(TTS_SEED_LOG_KEY)) || []; } catch (e) { log = []; }
+            container.innerHTML = '';
+            if (log.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.cssText = 'padding: 6px 8px; color: var(--text-secondary);';
+                empty.textContent = 'ログはありません';
+                container.appendChild(empty);
+                return;
+            }
+            log.forEach(entry => {
+                const row = document.createElement('div');
+                row.style.cssText = 'padding: 4px 8px; border-bottom: 1px solid var(--border-secondary); cursor: pointer; display: flex; gap: 8px;';
+                const seedSpan = document.createElement('span');
+                seedSpan.textContent = entry.seed;
+                seedSpan.style.cssText = 'color: var(--text-link); font-weight: bold; flex-shrink: 0;';
+                const textSpan = document.createElement('span');
+                textSpan.textContent = entry.text;
+                textSpan.style.cssText = 'overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary);';
+                row.appendChild(seedSpan);
+                row.appendChild(textSpan);
+                row.addEventListener('click', () => {
+                    const seedInput = document.getElementById('tts_seed');
+                    seedInput.value = entry.seed;
+                    seedInput.dispatchEvent(new Event('input'));
+                });
+                container.appendChild(row);
+            });
+        }
+
         function syncTtsSettings() {
             window.aiTts.maxChunkLength = clampTtsChunkLength(document.getElementById('tts_max_chunk').value);
             window.aiTts.updateConfig({
@@ -22604,12 +22883,23 @@
                 model: document.getElementById('tts_model').value,
                 voice: document.getElementById('tts_voice').value,
                 speed: document.getElementById('tts_speed').value,
-                format: document.getElementById('tts_format').value
+                format: document.getElementById('tts_format').value,
+                caption: document.getElementById('tts_caption').value,
+                numSteps: document.getElementById('tts_num_steps').value,
+                seed: document.getElementById('tts_seed').value,
+                cfgScaleText: document.getElementById('tts_cfg_scale_text').value,
+                cfgScaleCaption: document.getElementById('tts_cfg_scale_caption').value,
+                cfgScaleSpeaker: document.getElementById('tts_cfg_scale_speaker').value,
+                tScheduleMode: document.getElementById('tts_t_schedule_mode').value,
+                swayCoeff: document.getElementById('tts_sway_coeff').value,
             });
+            updateIrodoriSectionState();
             document.getElementById('tts_speed_val').innerText = document.getElementById('tts_speed').value;
+            document.getElementById('tts_sway_coeff_val').innerText =
+                parseFloat(document.getElementById('tts_sway_coeff').value).toFixed(1);
         }
 
-        document.getElementById('tts_available_voices').addEventListener('input', updateAvailableVoices);
+        document.getElementById('tts_available_voices').addEventListener('change', updateAvailableVoices);
 
         window.addEventListener('DOMContentLoaded', () => {
             const savedVoices = localStorage.getItem('tts_available_voices');
@@ -22630,6 +22920,12 @@
                     el.value = effective;
                 }
             });
+
+            const schedEl = document.getElementById('tts_t_schedule_mode');
+            if (!schedEl.value) {
+                schedEl.value = 'linear';
+                localStorage.setItem('tts_t_schedule_mode', 'linear');
+            }
 
             applyTtsEnabledState();
             syncTtsSettings();
@@ -22670,6 +22966,16 @@
             let cleaned = text;
             // コードブロックを除去
             cleaned = cleaned.replace(/```[\s\S]*?```/g, ' ');
+            cleaned = cleaned.replace(/`([^`\n]+)`/g, '$1');
+            cleaned = cleaned.replace(/!\[[^\]]*\]\([^)]*\)/g, ' ');
+            cleaned = cleaned.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+            cleaned = cleaned.replace(/^#{1,6}\s+/gm, '');
+            cleaned = cleaned.replace(/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/gm, ' ');
+            cleaned = cleaned.replace(/^\s*(?:[-*+]|\d+\.)\s+/gm, '');
+            cleaned = cleaned.replace(/^\s*>+\s?/gm, '');
+            cleaned = cleaned.replace(/~~([^~]+)~~/g, '$1');
+            cleaned = cleaned.replace(/https?:\/\/\S+/g, ' ');
+            cleaned = cleaned.replace(/\|/g, ' ');
 
             // 読み方辞書を適用（「」抽出や*除去より前に行う）
             cleaned = applyPronunciationDict(cleaned);
@@ -22720,7 +23026,7 @@
             if (!textToSpeak) return;
 
             ttsAutoSpokenIndices.add(idx);
-            window.aiTts.speak(textToSpeak);
+            window.aiTts.speakOrQueue(textToSpeak, idx);
         }
 
         function applyTtsEnabledState() {
@@ -22763,6 +23069,14 @@
             { id: 'tts_speed', key: 'tts_speed', type: 'text' },
             { id: 'tts_max_chunk', key: 'tts_max_chunk', type: 'text' },
             { id: 'tts_format', key: 'tts_format', type: 'text', defaultVal: 'mp3' },
+            { id: 'tts_caption', key: 'tts_caption', type: 'text' },
+            { id: 'tts_num_steps', key: 'tts_num_steps', type: 'text' },
+            { id: 'tts_seed', key: 'tts_seed', type: 'text' },
+            { id: 'tts_cfg_scale_text', key: 'tts_cfg_scale_text', type: 'text' },
+            { id: 'tts_cfg_scale_caption', key: 'tts_cfg_scale_caption', type: 'text' },
+            { id: 'tts_cfg_scale_speaker', key: 'tts_cfg_scale_speaker', type: 'text' },
+            { id: 'tts_t_schedule_mode', key: 'tts_t_schedule_mode', type: 'text', defaultVal: 'linear' },
+            { id: 'tts_sway_coeff', key: 'tts_sway_coeff', type: 'text' },
         ];
 
         document.getElementById('tts_max_chunk').addEventListener('change', () => {
@@ -22794,6 +23108,11 @@
 
         document.getElementById('tts_enabled').addEventListener('change', applyTtsEnabledState);
         document.getElementById('tts_kagi_only').addEventListener('change', updateTtsCheckboxStates);
+        document.getElementById('tts_seed_log_clear').addEventListener('click', () => {
+            localStorage.removeItem(TTS_SEED_LOG_KEY);
+            renderTtsSeedLog();
+        });
+        renderTtsSeedLog();
 
         appLogic.initializeApp();
     </script>
